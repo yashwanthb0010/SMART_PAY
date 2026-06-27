@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Edit Profile</title>
+  <style>
+    :root {
+      --primary-blue: #1a73e8;
+      --light-blue: #e8f0fe;
+      --secondary-blue: #174ea6;
+      --text-dark: #202124;
+      --text-light: #5f6368;
+      --white: #fff;
+      --gray-light: #f8f9fa;
+      --gray-border: #dadce0;
+      --input-border: #dadce0;
+      --input-focus: #1a73e8;
+      --success-green: #0f9d58;
+      --sidebar-width: 256px;
+      --shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+      --transition: all 0.2s ease;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+    }
+    
+    body {
+      display: flex;
+      min-height: 100vh;
+      background-color: var(--gray-light);
+      color: var(--text-dark);
+    }
+    
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--white);
+      color: var(--text-dark);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 4px rgba(0,0,0,0.14);
+      position: relative;
+      z-index: 10;
+      transition: var(--transition);
+    }
+    
+    .sidebar .logo {
+      font-size: 1.5rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--gray-border);
+      color: var(--primary-blue);
+    }
+    
+    .sidebar nav {
+      flex: 1;
+      padding: 0.5rem 0;
+    }
+    
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+      color: var(--text-light);
+      text-decoration: none;
+      transition: var(--transition);
+      border-radius: 0 24px 24px 0;
+      margin: 2px 0;
+      font-weight: 500;
+    }
+    
+    .sidebar nav a:hover {
+      background: var(--light-blue);
+      color: var(--primary-blue);
+    }
+    
+    .sidebar nav a.active {
+      background: var(--light-blue);
+      color: var(--primary-blue);
+      font-weight: 500;
+    }
+    
+    .sidebar .logout {
+      padding: 0.75rem 1.5rem;
+      border-top: 1px solid var(--gray-border);
+    }
+    
+    .sidebar .logout a {
+      color: var(--text-light);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      transition: var(--transition);
+      border-radius: 24px;
+      padding: 0.5rem 1rem;
+    }
+    
+    .sidebar .logout a:hover {
+      background: var(--light-blue);
+      color: var(--primary-blue);
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 1.5rem;
+      background-color: var(--gray-light);
+      transition: var(--transition);
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .header h1 {
+      color: var(--text-dark);
+      font-size: 1.5rem;
+      font-weight: 500;
+    }
+    
+    .date-time {
+      color: var(--text-light);
+      font-size: 0.875rem;
+    }
+    
+    .form-container {
+      background: var(--white);
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3);
+      max-width: 650px;
+      margin: 0 auto;
+    }
+    
+    .form-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--gray-border);
+    }
+    
+    .form-section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 1rem;
+      padding-bottom: 0;
+    }
+    
+    .form-section h2 {
+      font-size: 1rem;
+      color: var(--text-dark);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+    
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      margin: 0 -0.75rem;
+    }
+    
+    .form-group {
+      flex: 1 0 calc(50% - 1.5rem);
+      margin: 0 0.75rem 1rem;
+      min-width: 200px;
+    }
+    
+    .form-group.full-width {
+      flex: 1 0 100%;
+      margin: 0 0.75rem 1rem;
+    }
+    
+    .form-container label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-light);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .form-container input,
+    .form-container textarea,
+    .form-container select {
+      width: 100%;
+      padding: 0.75rem 0.875rem;
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: var(--transition);
+      background-color: var(--white);
+      color: var(--text-dark);
+    }
+    
+    .form-container input:focus,
+    .form-container textarea:focus,
+    .form-container select:focus {
+      outline: none;
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 1px var(--input-focus);
+    }
+    
+    .form-container textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.5rem;
+    }
+    
+    .back-link {
+      color: var(--text-light);
+      text-decoration: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      transition: var(--transition);
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+    }
+    
+    .back-link:hover {
+      background-color: var(--gray-light);
+    }
+    
+    .back-link .icon {
+      margin-right: 0.5rem;
+    }
+    
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-primary {
+      background: var(--primary-blue);
+      color: var(--white);
+    }
+    
+    .btn-primary:hover {
+      background: var(--secondary-blue);
+      box-shadow: 0 1px 2px rgba(60,64,67,0.3);
+    }
+    
+    .input-with-icon {
+      position: relative;
+    }
+    
+    .input-with-icon input {
+      padding-right: 2.5rem;
+    }
+    
+    .input-icon {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+      cursor: pointer;
+    }
+    
+    .validation-message {
+      display: none;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      color: var(--success-green);
+    }
+    
+    .progress-bar {
+      height: 4px;
+      background: var(--gray-light);
+      margin-top: 0.5rem;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      background: var(--primary-blue);
+      transition: width 0.3s ease;
+    }
+    
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 64px;
+        overflow: hidden;
+      }
+      
+      .sidebar .logo {
+        justify-content: center;
+        padding: 1rem 0;
+      }
+      
+      .sidebar .logo span {
+        display: none;
+      }
+      
+      .sidebar nav a {
+        padding: 0.75rem;
+        justify-content: center;
+        border-radius: 0;
+      }
+      
+      .sidebar nav a span.text {
+        display: none;
+      }
+      
+      .sidebar .logout {
+        padding: 0.75rem 0;
+        display: flex;
+        justify-content: center;
+      }
+      
+      .sidebar .logout a {
+        padding: 0.5rem;
+      }
+      
+      .sidebar .logout span.text {
+        display: none;
+      }
+      
+      .main-content {
+        padding: 1rem;
+      }
+      
+      .form-container {
+        padding: 1.25rem;
+      }
+      
+      .form-group {
+        flex: 1 0 100%;
+      }
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease forwards;
+    }
+    
+    /* Material Icons using Google Material Symbols */
+    .icon {
+      font-size: 1.2rem;
+      margin-right: 1rem;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">
+      <span class="icon">💳</span>
+      <span>MyPay</span>
+    </div>
+    <nav>
+      <a href="/user/dashboard">
+        <span class="icon">📊</span>
+        <span class="text">Home</span>
+      </a>
+      <a href="/user/transactions">
+        <span class="icon">📝</span>
+        <span class="text">Activity</span>
+      </a>
+      <a href="{{ url_for('user.list_vaults') }}">
+        <span class="icon">🏦</span>
+        <span class="text">Savings</span>
+      </a>
+      <a href="{{ url_for('user.donation_pool') }}">
+        <span class="icon">🤝</span>
+        <span class="text">Give</span>
+      </a>
+      <a href="/user/send_money">
+        <span class="icon">📤</span>
+        <span class="text">Pay</span>
+      </a>
+      <a href="/user/profile/edit" class="active">
+        <span class="icon">👤</span>
+        <span class="text">Profile</span>
+      </a>
+    </nav>
+    <div class="logout">
+      <a href="/logout">
+        <span class="icon">🚪</span>
+        <span class="text">Sign out</span>
+      </a>
+    </div>
+  </div>
+  
+  <div class="main-content">
+    <div class="header">
+      <h1>Profile settings</h1>
+      <div class="date-time" id="currentDateTime"></div>
+    </div>
+    
+    <div class="form-container fade-in">
+      <form method="POST" id="profileForm">
+        <div class="form-section">
+          <h2>Personal information</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Full name</label>
+              <input id="name" name="name" type="text" value="{{ user.name }}" required/>
+            </div>
+            <div class="form-group">
+              <label for="email">Email address</label>
+              <input id="email" name="email" type="email" value="{{ user.email }}" required/>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dob">Date of birth</label>
+              <input id="dob" name="dob" type="date" value="{{ user.dob }}"/>
+            </div>
+            <div class="form-group">
+              <label for="gender">Gender</label>
+              <select id="gender" name="gender">
+                <option value="">Select</option>
+                <option {% if user.gender=="Male" %}selected{% endif %}>Male</option>
+                <option {% if user.gender=="Female" %}selected{% endif %}>Female</option>
+                <option {% if user.gender=="Other" %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-section">
+          <h2>Contact information</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="phone">Phone number</label>
+              <input id="phone" name="phone" type="tel" value="{{ user.phone }}"/>
+            </div>
+            <div class="form-group full-width">
+              <label for="address">Address</label>
+              <textarea id="address" name="address">{{ user.address }}</textarea>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-section">
+          <h2>Security</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="password">New password</label>
+              <div class="input-with-icon">
+                <input id="password" name="password" type="password" placeholder="Leave blank to keep current"/>
+                <span class="input-icon" id="togglePassword">👁️</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="passwordStrength"></div>
+              </div>
+              <div class="validation-message" id="passwordValidation">Password strength: <span id="strengthText">Weak</span></div>
+            </div>
+            <div class="form-group">
+              <label for="confirm_password">Confirm password</label>
+              <input id="confirm_password" name="confirm_password" type="password" placeholder="Re-enter new password"/>
+              <div class="validation-message" id="confirmValidation">Passwords match</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <a class="back-link" href="/user/dashboard">
+            <span class="icon">←</span>Cancel
+          </a>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Update date and time
+    function updateDateTime() {
+      const now = new Date();
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      document.getElementById('currentDateTime').innerText = now.toLocaleDateString('en-US', options);
+    }
+    
+    // Initial call and then update every minute
+    updateDateTime();
+    setInterval(updateDateTime, 60000);
+    
+    // Password visibility toggle
+    const togglePassword = document.getElementById('togglePassword');
+    const password = document.getElementById('password');
+    
+    if (togglePassword && password) {
+      togglePassword.addEventListener('click', function () {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        togglePassword.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
+      });
+    }
+    
+    // Password strength checker
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirm_password');
+    const strengthBar = document.getElementById('passwordStrength');
+    const strengthText = document.getElementById('strengthText');
+    const passwordValidation = document.getElementById('passwordValidation');
+    const confirmValidation = document.getElementById('confirmValidation');
+    
+    if (passwordInput) {
+      passwordInput.addEventListener('input', function() {
+        const value = passwordInput.value;
+        
+        if (value.length > 0) {
+          passwordValidation.style.display = 'block';
+          
+          // Simple strength calculation
+          let strength = 0;
+          if (value.length > 6) strength += 20;
+          if (value.length > 10) strength += 20;
+          if (/[A-Z]/.test(value)) strength += 20;
+          if (/[0-9]/.test(value)) strength += 20;
+          if (/[^A-Za-z0-9]/.test(value)) strength += 20;
+          
+          strengthBar.style.width = strength + '%';
+          
+          if (strength < 40) {
+            strengthBar.style.background = '#ea4335'; // Google red
+            strengthText.textContent = 'Weak';
+            strengthText.style.color = '#ea4335';
+          } else if (strength < 80) {
+            strengthBar.style.background = '#fbbc04'; // Google yellow
+            strengthText.textContent = 'Medium';
+            strengthText.style.color = '#fbbc04';
+          } else {
+            strengthBar.style.background = '#0f9d58'; // Google green
+            strengthText.textContent = 'Strong';
+            strengthText.style.color = '#0f9d58';
+          }
+          
+          // Check confirmation match
+          if (confirmInput.value && confirmInput.value !== value) {
+            confirmValidation.textContent = 'Passwords don\'t match';
+            confirmValidation.style.color = '#ea4335';
+            confirmValidation.style.display = 'block';
+          } else if (confirmInput.value && confirmInput.value === value) {
+            confirmValidation.textContent = 'Passwords match';
+            confirmValidation.style.color = '#0f9d58';
+            confirmValidation.style.display = 'block';
+          }
+        } else {
+          passwordValidation.style.display = 'none';
+          strengthBar.style.width = '0';
+        }
+      });
+    }
+    
+    if (confirmInput) {
+      confirmInput.addEventListener('input', function() {
+        if (confirmInput.value) {
+          confirmValidation.style.display = 'block';
+          
+          if (confirmInput.value === passwordInput.value) {
+            confirmValidation.textContent = 'Passwords match';
+            confirmValidation.style.color = '#0f9d58';
+          } else {
+            confirmValidation.textContent = 'Passwords don\'t match';
+            confirmValidation.style.color = '#ea4335';
+          }
+        } else {
+          confirmValidation.style.display = 'none';
+        }
+      });
+    }
+    
+    // Add active class to current page in sidebar
+    document.addEventListener('DOMContentLoaded', function() {
+      const currentLocation = window.location.pathname;
+      const navLinks = document.querySelectorAll('.sidebar nav a');
+      
+      navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentLocation) {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    });
+    
+    // Form validation
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+      profileForm.addEventListener('submit', function(event) {
+        let isValid = true;
+        
+        // Basic email validation
+        const email = document.getElementById('email');
+        if (email && !validateEmail(email.value)) {
+          isValid = false;
+          highlightInvalid(email);
+        }
+        
+        // Password confirmation validation
+        if (passwordInput && confirmInput && 
+            passwordInput.value && 
+            passwordInput.value !== confirmInput.value) {
+          isValid = false;
+          highlightInvalid(confirmInput);
+        }
+        
+        if (!isValid) {
+          event.preventDefault();
+        }
+      });
+    }
+    
+    function validateEmail(email) {
+      const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+      return re.test(String(email).toLowerCase());
+    }
+    
+    function highlightInvalid(element) {
+      element.style.borderColor = '#ea4335';
+      element.style.boxShadow = '0 0 0 1px #ea4335';
+      
+      element.addEventListener('input', function() {
+        element.style.borderColor = '';
+        element.style.boxShadow = '';
+      }, { once: true });
+    }
+  </script>
+</body>
+</html>

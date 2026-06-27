@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin – Withdraw from {{ user.name }}</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      /* Palette */
+      --brand-primary: #1a73e8;
+      --brand-primary-dark: #174ea6;
+      --brand-primary-light: #e8f0fe;
+      --text-primary: #202124;
+      --text-secondary: #5f6368;
+      --border: #dadce0;
+      --surface: #ffffff;
+      --surface-muted: #f8f9fa;
+      --success: #0f9d58;
+      --error: #ea4335;
+
+      /* Effects */
+      --radius: 8px;
+      --shadow-sm: 0 1px 2px rgba(60, 64, 67, 0.3);
+      --shadow-lg: 0 8px 16px rgba(60, 64, 67, 0.15);
+      --transition: 0.25s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+      background: var(--surface-muted);
+      font-family: "Roboto", Arial, sans-serif;
+      color: var(--text-primary);
+    }
+
+    /* Card */
+    .card {
+      position: relative;
+      width: 100%;
+      max-width: 460px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .card__bar {
+      height: 4px;
+      width: 100%;
+      background: linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
+    }
+
+    .card__body {
+      padding: 2rem 2rem 2.5rem;
+    }
+
+    h1 {
+      margin: 0 0 1.5rem;
+      font-size: 1.375rem;
+      font-weight: 500;
+      line-height: 1.3;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 1rem;
+      background: var(--surface);
+      color: var(--text-primary);
+      transition: border var(--transition), box-shadow var(--transition);
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.25);
+    }
+
+    /* Video preview */
+    video {
+      width: 100%;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      margin-bottom: 0.75rem;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-block;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      transition: background var(--transition), box-shadow var(--transition);
+    }
+
+    .btn--secondary {
+      background: var(--brand-primary-light);
+      color: var(--brand-primary);
+      margin-bottom: 1rem;
+    }
+
+    .btn--secondary:hover {
+      background: #d2e3fc;
+    }
+
+    .btn--primary {
+      background: var(--brand-primary);
+      color: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn--primary:hover {
+      background: var(--brand-primary-dark);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 1.75rem;
+      text-decoration: none;
+      color: var(--brand-primary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color var(--transition);
+    }
+
+    .back-link:hover {
+      color: var(--brand-primary-dark);
+    }
+
+    /* Status chip */
+    .status {
+      display: none;
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+      text-align: center;
+      border-radius: 4px;
+      background: var(--brand-primary-light);
+      color: var(--brand-primary);
+    }
+
+    .status--show {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 480px) {
+      .card__body {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="card__bar"></div>
+
+    <div class="card__body">
+      <h1>Withdraw from {{ user.name }}</h1>
+
+      <form method="POST">
+        <!-- Amount -->
+        <div class="form-group">
+          <label for="amount">Amount (₹)</label>
+          <input id="amount" name="amount" type="number" step="0.01" required />
+        </div>
+
+        <!-- Face capture -->
+        <div class="form-group">
+          <label>Admin Face Verification</label>
+          <input type="hidden" name="face_data" id="face_data" />
+          <video id="video" autoplay muted></video>
+          <button type="button" id="capture" class="btn btn--secondary">Capture Face</button>
+          <div id="captureStatus" class="status">Face captured ✓</div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn--primary">Confirm Withdraw</button>
+      </form>
+
+      <a class="back-link" href="{{ url_for('admin.user_details', acc_no=user.acc_no) }}">← Back to User Details</a>
+    </div>
+  </main>
+
+  <script>
+    const video = document.getElementById('video');
+    const captureBtn = document.getElementById('capture');
+    const faceInput = document.getElementById('face_data');
+    const captureStatus = document.getElementById('captureStatus');
+
+    // Start camera
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        console.error(err);
+        captureBtn.disabled = true;
+        captureBtn.textContent = 'Camera Unavailable';
+      });
+
+    // Capture face
+    captureBtn.addEventListener('click', () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      faceInput.value = canvas.toDataURL('image/jpeg');
+
+      captureStatus.classList.add('status--show');
+      captureBtn.textContent = 'Retake Face';
+    });
+  </script>
+</body>
+</html>

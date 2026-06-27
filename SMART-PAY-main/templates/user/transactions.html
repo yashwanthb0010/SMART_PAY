@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Transactions</title>
+  <style>
+    :root {
+      --primary-blue: #1a73e8;
+      --secondary-blue: #4285f4;
+      --light-blue: #e8f0fe;
+      --white: #ffffff;
+      --text-dark: #202124;
+      --text-muted: #5f6368;
+      --gray-light: #f8f9fa;
+      --sidebar-width: 240px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      --transition: all 0.2s ease;
+      --border-radius: 16px;
+      --success-green: #34a853;
+      --danger-red: #ea4335;
+    }
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif; 
+    }
+    body { 
+      display: flex; 
+      min-height: 100vh; 
+      background: var(--gray-light); 
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--white);
+      color: var(--text-dark);
+      display: flex; 
+      flex-direction: column;
+      box-shadow: var(--shadow);
+      z-index: 10;
+    }
+    .sidebar .logo {
+      font-size: 1.5rem; 
+      text-align: center; 
+      padding: 1.5rem 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      font-weight: 500;
+      color: var(--primary-blue);
+    }
+    .sidebar nav {
+      flex: 1; 
+      padding: 1rem 0;
+    }
+    .sidebar nav a {
+      display: flex; 
+      align-items: center;
+      padding: 1rem 1.5rem;
+      color: var(--text-dark); 
+      text-decoration: none;
+      transition: var(--transition);
+      border-radius: 0 24px 24px 0;
+      margin-right: 12px;
+      font-weight: 500;
+    }
+    .sidebar nav a .icon {
+      margin-right: 1rem; 
+      font-size: 1.2rem;
+    }
+    .sidebar nav a:hover {
+      background: var(--light-blue);
+      color: var(--primary-blue);
+    }
+    .sidebar nav a.active {
+      background: var(--light-blue);
+      color: var(--primary-blue);
+    }
+    .sidebar .logout {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    .sidebar .logout a {
+      color: var(--text-dark); 
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+    .sidebar .logout a .icon {
+      margin-right: 1rem;
+    }
+    .sidebar .logout a:hover {
+      color: var(--primary-blue);
+    }
+
+    /* Main content */
+    .main-content {
+      flex: 1; 
+      padding: 1.5rem;
+      transition: var(--transition);
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .main-content h1 {
+      color: var(--text-dark);
+      font-size: 1.8rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    
+    /* Password prompt */
+    .auth-form {
+      max-width: 400px; 
+      margin: 3rem auto; 
+      background: var(--white);
+      padding: 2rem; 
+      border-radius: var(--border-radius); 
+      box-shadow: var(--shadow);
+    }
+    .auth-form label { 
+      display: block; 
+      margin-bottom: .75rem; 
+      font-weight: 500; 
+      color: var(--text-muted); 
+    }
+    .auth-form input[type="password"] {
+      width: 100%; 
+      padding: 1rem; 
+      margin-bottom: 1.5rem;
+      border: 1px solid #dadce0; 
+      border-radius: 8px; 
+      font-size: 1rem;
+    }
+    .auth-form input[type="password"]:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
+    }
+    .auth-form button {
+      width: 100%; 
+      padding: .85rem; 
+      background: var(--primary-blue);
+      color: var(--white); 
+      border: none; 
+      border-radius: 24px;
+      font-size: 1rem; 
+      font-weight: 500; 
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .auth-form button:hover { 
+      background: var(--secondary-blue); 
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    /* Balance card */
+    .balance-card {
+      background: var(--white); 
+      padding: 1.75rem; 
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow); 
+      display: flex; 
+      align-items: center;
+      margin: 0 auto 2rem; 
+      max-width: 380px;
+    }
+    .balance-card .icon {
+      font-size: 2.2rem; 
+      margin-right: 1.25rem; 
+      color: var(--primary-blue);
+    }
+    .balance-card .details h2 {
+      margin: 0; 
+      color: var(--text-muted); 
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    .balance-card .details p {
+      margin: .5rem 0 0; 
+      font-size: 2rem; 
+      color: var(--text-dark);
+      font-weight: 500;
+    }
+
+    /* Table */
+    .table-container {
+      background: var(--white); 
+      border-radius: var(--border-radius); 
+      padding: 1.5rem;
+      box-shadow: var(--shadow); 
+      overflow-x: auto;
+    }
+    .table-container h2 {
+      color: var(--primary-blue);
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    table {
+      width: 100%; 
+      border-collapse: collapse;
+    }
+    thead { 
+      border-bottom: 2px solid #dadce0; 
+    }
+    th, td {
+      padding: 1rem; 
+      text-align: left;
+    }
+    th { 
+      color: var(--text-muted); 
+      font-weight: 500; 
+    }
+    tbody tr {
+      border-bottom: 1px solid #dadce0;
+    }
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+    .type-send { 
+      color: var(--danger-red); 
+      font-weight: 500;
+    }
+    .type-receive { 
+      color: var(--success-green); 
+      font-weight: 500;
+    }
+    .icon-arrow {
+      font-size: 1rem; 
+      margin-right: .5rem; 
+      vertical-align: middle;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+
+    .back {
+      display: inline-flex;
+      align-items: center;
+      margin: 1.5rem auto 0;
+      padding: .75rem 1.25rem; 
+      background: var(--primary-blue);
+      color: var(--white); 
+      text-decoration: none; 
+      border-radius: 24px;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+    .back:hover { 
+      background: var(--secondary-blue); 
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .back-container {
+      display: flex;
+      justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 70px; }
+      .sidebar nav a span:not(.icon) { display: none; }
+      .sidebar .logo { font-size: 1.2rem; }
+      .main-content { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Smart Pay</div>
+    <nav>
+      <a href="/user/dashboard"><span class="icon">📊</span><span>Dashboard</span></a>
+      <a href="/user/transactions" class="active"><span class="icon">📝</span><span>Transactions</span></a>
+      <a href="{{ url_for('user.list_vaults') }}">
+        <span class="icon">🏦</span>
+        <span>My Vaults</span>
+      </a>
+       <a href="{{ url_for('user.donation_pool') }}"><span class="icon">🤝</span><span>Donations</span></a>
+      <a href="/user/send_money"><span class="icon">📤</span><span>Send Money</span></a>
+      <a href="/user/profile/edit"><span class="icon">👤</span><span>Edit Profile</span></a>
+    </nav>
+    <div class="logout">
+      <a href="/logout"><span class="icon">🚪</span><span>Logout</span></a>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <h1>Your Transactions</h1>
+
+    <!-- 1) Password authentication -->
+    {% if not authenticated %}
+      <div class="auth-form">
+        <form method="POST" action="{{ url_for('user.transactions_view') }}">
+          <label for="auth_password">Enter your password to view transactions</label>
+          <input id="auth_password" name="auth_password" type="password" placeholder="Password" required/>
+          <button type="submit">Unlock</button>
+        </form>
+      </div>
+    {% else %}
+      <!-- 2) Balance card -->
+      <div class="balance-card">
+        <span class="icon">💳</span>
+        <div class="details">
+          <h2>Current Balance</h2>
+          <p>₹{{ "%.2f"|format(user.balance) }}</p>
+        </div>
+      </div>
+
+      <!-- 3) Transactions table -->
+      <div class="table-container">
+        <h2>Transaction History</h2>
+        {% if transactions %}
+        <table>
+          <thead>
+            <tr>
+              <th>Date &amp; Time</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Counterparty</th>
+              <th>Balance After</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in transactions %}
+            <tr>
+              <td>{{ t.timestamp.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td class="type-{{ t.type }}">
+                {% if t.type=='send' %}
+                  <span class="icon-arrow">➖</span>Sent
+                {% else %}
+                  <span class="icon-arrow">➕</span>Received
+                {% endif %}
+              </td>
+              <td>₹{{ "%0.2f"|format(t.amount) }}</td>
+              <td>
+                {% if t.type=='send' %}
+                  {{ t.recipient_upi }}
+                {% else %}
+                  {{ t.sender_upi }}
+                {% endif %}
+              </td>
+              <td>₹{{ "%0.2f"|format(t.resulting_balance) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+          No transactions found.
+        </div>
+        {% endif %}
+      </div>
+      <div class="back-container">
+        <a class="back" href="/user/dashboard">← Back to Dashboard</a>
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>

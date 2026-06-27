@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Donation Pool</title>
+  <style>
+    :root {
+      --primary-blue: #1a73e8;
+      --secondary-blue: #4285f4;
+      --light-blue: #e8f0fe;
+      --white: #ffffff;
+      --text-dark: #202124;
+      --text-muted: #5f6368;
+      --gray-light: #f8f9fa;
+      --sidebar-width: 240px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      --transition: all 0.2s ease;
+      --border-radius: 16px;
+    }
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      font-family: 'Google Sans', 'Segoe UI', Arial, sans-serif;
+    }
+    body {
+      display: flex; min-height: 100vh;
+      background: var(--gray-light);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--white);
+      color: var(--text-dark);
+      display: flex; flex-direction: column;
+      box-shadow: var(--shadow);
+      z-index: 10;
+    }
+    .sidebar .logo {
+      font-size: 1.5rem; text-align: center; padding: 1.5rem 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      font-weight: 500;
+      color: var(--primary-blue);
+    }
+    .sidebar nav {
+      flex: 1; padding: 1rem 0;
+    }
+    .sidebar nav a {
+      display: flex; align-items: center;
+      padding: 1rem 1.5rem;
+      color: var(--text-dark); text-decoration: none;
+      transition: var(--transition);
+      border-radius: 0 24px 24px 0;
+      margin-right: 12px;
+      font-weight: 500;
+    }
+    .sidebar nav a .icon {
+      margin-right: 1rem; font-size: 1.2rem;
+    }
+    .sidebar nav a:hover {
+      background: var(--light-blue);
+      color: var(--primary-blue);
+    }
+    .sidebar nav a.active {
+      background: var(--light-blue);
+      color: var(--primary-blue);
+    }
+    .sidebar .logout {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    .sidebar .logout a {
+      color: var(--text-dark); text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+    .sidebar .logout a .icon {
+      margin-right: 1rem;
+    }
+    .sidebar .logout a:hover {
+      color: var(--primary-blue);
+    }
+
+    /* Main content */
+    .main-content {
+      flex: 1; 
+      padding: 1.5rem;
+      transition: var(--transition);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .main-content h1 {
+      color: var(--text-dark);
+      font-size: 1.8rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    /* Error Messages */
+    .error-messages {
+      background: #ffebee;
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .error-messages ul {
+      list-style-type: none;
+    }
+    .error-messages li {
+      color: #d32f2f;
+    }
+
+    /* Donation Form */
+    .form-container {
+      background: var(--white);
+      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+    }
+    .form-container h2 {
+      margin-bottom: 1.5rem;
+      color: var(--primary-blue);
+      font-size: 1.2rem;
+      font-weight: 500;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: .5rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .form-group input[type="number"] {
+      width: 100%;
+      padding: 1rem;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      transition: var(--transition);
+      text-align: center;
+    }
+    .form-group input[type="number"]:focus {
+      border-color: var(--primary-blue);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
+    }
+
+    /* Face capture */
+    .face-capture {
+      margin: 1.5rem 0;
+    }
+    .face-capture video {
+      width: 100%;
+      max-width: 320px;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      margin: 0 auto 1rem;
+      display: block;
+    }
+    .face-capture button {
+      background: var(--secondary-blue);
+      color: var(--white);
+      border: none;
+      padding: .75rem 1.5rem;
+      border-radius: 24px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: block;
+      margin: 0 auto;
+      font-weight: 500;
+    }
+    .face-capture button:hover {
+      background: var(--primary-blue);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    .capture-status {
+      margin-top: .75rem;
+      color: var(--text-muted);
+      font-size: .9rem;
+      text-align: center;
+    }
+
+    /* Donate button */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-blue);
+      color: var(--white);
+      border: none;
+      padding: .85rem 2rem;
+      border-radius: 24px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      width: 80%;
+      margin: 1rem auto 0;
+      font-weight: 500;
+    }
+    .btn .icon {
+      margin-right: .75rem;
+      font-size: 1.2rem;
+    }
+    .btn:hover {
+      background: var(--secondary-blue);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--white);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .card h2 {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: .75rem;
+      font-weight: 500;
+    }
+    .card p {
+      font-size: 1.8rem;
+      font-weight: 500;
+      color: var(--primary-blue);
+    }
+
+    /* History table */
+    .table-container {
+      background: var(--white);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+    .table-container h2 {
+      color: var(--primary-blue);
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead {
+      border-bottom: 2px solid #dadce0;
+    }
+    th, td {
+      padding: 1rem;
+      text-align: left;
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    tbody tr {
+      border-bottom: 1px solid #dadce0;
+    }
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 70px; }
+      .sidebar nav a span:not(.icon) { display: none; }
+      .sidebar .logo { font-size: 1.2rem; }
+      .main-content { padding: 1rem; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Smart Pay</div>
+    <nav>
+      <a href="{{ url_for('user.dashboard') }}"><span class="icon">📊</span><span>Dashboard</span></a>
+      <a href="{{ url_for('user.transactions_view') }}"><span class="icon">📝</span><span>Transactions</span></a>
+      
+      <a href="{{ url_for('user.send_money') }}"><span class="icon">📤</span><span>Send Money</span></a>
+      <a href="{{ url_for('user.list_vaults') }}"><span class="icon">🏦</span><span>My Vaults</span></a>
+      <a href="{{ url_for('user.donation_pool') }}" class="active"><span class="icon">🤝</span><span>Donations</span></a>
+       <a href="/user/profile/edit">
+      <div class="icon">👤</div>
+      <span>Edit Profile</span>
+    </a>
+    </nav>
+    <div class="logout">
+      <a href="/logout"><span class="icon">🚪</span><span>Logout</span></a>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <h1>Donation Pool</h1>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="error-messages">
+          <ul>
+            {% for m in messages %}
+            <li>{{ m }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    {% endwith %}
+    
+    <!-- Cards -->
+    <div class="cards">
+      <div class="card">
+        <h2>Your Total Donated</h2>
+        <p>₹{{ "%0.2f"|format(user_total) }}</p>
+      </div>
+      <div class="card">
+        <h2>Grand Pool Total</h2>
+        <p>₹{{ "%0.2f"|format(grand_total) }}</p>
+      </div>
+    </div>
+
+    <!-- Donation Form -->
+    <div class="form-container">
+      <h2>Make a Donation</h2>
+      <form method="POST" id="donateForm">
+        <div class="form-group">
+          <label for="donateAmount">Amount (₹)</label>
+          <input id="donateAmount" name="amount" type="number" step="0.01" min="1" placeholder="Enter amount" required/>
+        </div>
+        <div class="form-group face-capture">
+          <label>Face Verification</label>
+          <video id="donateVideo" autoplay></video>
+          <button type="button" id="donateCapture">Capture Face</button>
+          <input type="hidden" name="face_data" id="donateFaceData"/>
+          <div class="capture-status" id="donateStatus">No face captured</div>
+        </div>
+        <button type="submit" class="btn">
+          <span class="icon">🤝</span>Donate Now
+        </button>
+      </form>
+    </div>
+
+    <!-- Donation History -->
+    <div class="table-container">
+      <h2>Donation History</h2>
+      {% if history %}
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in history %}
+          <tr>
+            <td>{{ d.timestamp.strftime("%Y-%m-%d %H:%M") }}</td>
+            <td>{{ "%0.2f"|format(d.amount) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        No donations yet.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    // Face capture logic
+    const video = document.getElementById('donateVideo');
+    const btn   = document.getElementById('donateCapture');
+    const out   = document.getElementById('donateStatus');
+    const hid   = document.getElementById('donateFaceData');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => video.srcObject = stream)
+      .catch(err => out.textContent = 'Camera error');
+
+    btn.addEventListener('click', () => {
+      const canvas = document.createElement('canvas');
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      hid.value = canvas.toDataURL('image/jpeg');
+      out.textContent = '✓ Face Captured';
+    });
+  </script>
+</body>
+</html>
