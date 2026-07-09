@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Login</title>
+  <style>
+    :root {
+      --primary-blue: #007bff;
+      --light-blue: #e9f5ff;
+      --bg-white: #ffffff;
+      --text-dark: #212529;
+      --input-border: #ced4da;
+      --hover-blue: #0056b3;
+      --focus-shadow: rgba(0, 123, 255, 0.25);
+    }
+    
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      font-family: Arial, sans-serif; 
+    }
+    
+    body { 
+      background: var(--light-blue); 
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      background: var(--primary-blue);
+      color: #fff;
+      text-align: center;
+      padding: 1.2rem 0;
+      font-size: 1.6rem;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(
+        to right, 
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      animation: shine 3s infinite;
+    }
+    
+    @keyframes shine {
+      to {
+        left: 150%;
+      }
+    }
+    
+    .form-container {
+      max-width: 420px;
+      width: 90%;
+      margin: 3rem auto;
+      background: var(--bg-white);
+      padding: 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+      transform: translateY(0);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .form-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .form-container h2 {
+      color: var(--primary-blue);
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-size: 1.8rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    
+    .form-container label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      transition: color 0.3s;
+    }
+    
+    .form-container input {
+      width: 100%;
+      padding: 0.9rem;
+      border: 1px solid var(--input-border);
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: all 0.3s;
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .form-container input:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px var(--focus-shadow);
+    }
+    
+    .form-container input:focus + .focus-border {
+      transform: scaleX(1);
+    }
+    
+    .focus-border {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--primary-blue);
+      transform: scaleX(0);
+      transition: transform 0.3s;
+    }
+    
+    .form-container button {
+      width: 100%;
+      padding: 1rem;
+      margin-top: 1rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      background: var(--primary-blue);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .form-container button:hover {
+      background: var(--hover-blue);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-container button:active {
+      transform: translateY(0);
+    }
+    
+    .form-container button::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1) translate(-50%, -50%);
+      transform-origin: 50% 50%;
+    }
+    
+    .form-container button:focus::after {
+      animation: ripple 1s ease-out;
+    }
+    
+    @keyframes ripple {
+      0% {
+        transform: scale(0) translate(-50%, -50%);
+        opacity: 0.5;
+      }
+      100% {
+        transform: scale(40) translate(-50%, -50%);
+        opacity: 0;
+      }
+    }
+    
+    .error-messages {
+      background-color: #ffebee;
+      border-left: 4px solid #f44336;
+      color: #d32f2f;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    
+    .error-messages ul {
+      list-style-type: none;
+      padding-left: 0.5rem;
+    }
+    
+    .error-messages li {
+      margin-bottom: 0.3rem;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: auto;
+      padding: 1.5rem 0;
+      font-size: 0.95rem;
+      color: var(--text-dark);
+    }
+    
+    .footer a { 
+      color: var(--primary-blue); 
+      text-decoration: none;
+      font-weight: bold;
+      position: relative;
+      transition: color 0.3s;
+    }
+    
+    .footer a::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      bottom: -2px;
+      left: 0;
+      background-color: var(--primary-blue);
+      transform: scaleX(0);
+      transition: transform 0.3s;
+    }
+    
+    .footer a:hover {
+      color: var(--hover-blue);
+    }
+    
+    .footer a:hover::after {
+      transform: scaleX(1);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">Login</div>
+  <div class="form-container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="error-messages">
+          <ul>
+            {% for m in messages %}
+            <li>{{ m }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    {% endwith %}
+    
+    <form method="POST">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required autocomplete="email"/>
+        <span class="focus-border"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password"/>
+        <span class="focus-border"></span>
+      </div>
+
+      <button type="submit">Login</button>
+    </form>
+  </div>
+  
+  <div class="footer">
+    Don't have an account? <a href="/register">Register here</a>
+  </div>
+
+  <script>
+    // Add subtle animation to inputs when they receive focus
+    const inputs = document.querySelectorAll('input');
+    
+    inputs.forEach(input => {
+      input.addEventListener('focus', function() {
+        this.parentElement.querySelector('label').style.color = 'var(--primary-blue)';
+      });
+      
+      input.addEventListener('blur', function() {
+        this.parentElement.querySelector('label').style.color = 'var(--text-dark)';
+      });
+    });
+
+    // Add button ripple effect
+    document.querySelector('button').addEventListener('click', function(e) {
+      const button = this;
+      const ripple = document.createElement('span');
+      const rect = button.getBoundingClientRect();
+      
+      ripple.className = 'ripple';
+      ripple.style.width = ripple.style.height = Math.max(rect.width, rect.height) + 'px';
+      button.appendChild(ripple);
+      
+      setTimeout(() => {
+        ripple.remove();
+      }, 600);
+    });
+  </script>
+</body>
+</html>

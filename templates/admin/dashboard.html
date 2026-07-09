@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin Dashboard</title>
+  <style>
+    :root {
+      --primary-blue: #007bff;
+      --primary-blue-hover: #0056b3;
+      --light-blue: #e9f5ff;
+      --sidebar-width: 240px;
+      --bg-white: #ffffff;
+      --text-dark: #212529;
+      --text-gray: #6c757d;
+      --card-shadow: rgba(0, 0, 0, 0.1);
+      --border-light: rgba(255, 255, 255, 0.2);
+      --border-radius: 8px;
+      --transition-speed: 0.3s;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    body {
+      display: flex;
+      min-height: 100vh;
+      background: var(--light-blue);
+      color: var(--text-dark);
+    }
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--primary-blue);
+      color: var(--bg-white);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 3px 0 10px rgba(0, 0, 0, 0.15);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .sidebar .logo {
+      font-size: 1.5rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 1.5rem 0;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .sidebar nav {
+      flex: 1;
+      padding: 1.5rem 0;
+    }
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      padding: 0.875rem 1.5rem;
+      color: var(--bg-white);
+      text-decoration: none;
+      transition: all var(--transition-speed);
+      border-left: 3px solid transparent;
+      margin: 0.25rem 0;
+    }
+    .sidebar nav a:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-left: 3px solid var(--bg-white);
+      padding-left: 1.75rem;
+    }
+    .sidebar nav a.active {
+      background: rgba(255, 255, 255, 0.2);
+      border-left: 3px solid var(--bg-white);
+    }
+    .sidebar .logout {
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid var(--border-light);
+    }
+    .sidebar .logout a {
+      display: block;
+      color: var(--bg-white);
+      text-decoration: none;
+      padding: 0.625rem;
+      border-radius: var(--border-radius);
+      text-align: center;
+      transition: all var(--transition-speed);
+      font-weight: 500;
+    }
+    .sidebar .logout a:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .main-content header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(0, 123, 255, 0.2);
+    }
+    .main-content h1 {
+      color: var(--primary-blue);
+      font-size: 1.75rem;
+      font-weight: 600;
+    }
+    .stats {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--bg-white);
+      border-radius: var(--border-radius);
+      padding: 1.25rem;
+      flex: 1;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      transition: transform var(--transition-speed);
+    }
+    .stat-card:hover {
+      transform: translateY(-3px);
+    }
+    .stat-card h3 {
+      color: var(--text-gray);
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-card p {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--primary-blue);
+    }
+    .user-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .user-card {
+      background: var(--bg-white);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all var(--transition-speed);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .user-card:hover {
+      box-shadow: 0 8px 15px rgba(0, 123, 255, 0.1);
+      transform: translateY(-5px);
+    }
+    .user-card h2 {
+      font-size: 1.25rem;
+      color: var(--primary-blue);
+      margin-bottom: 1rem;
+      border-bottom: 1px solid rgba(0, 123, 255, 0.1);
+      padding-bottom: 0.625rem;
+    }
+    .user-card p {
+      margin: 0.5rem 0;
+      font-size: 0.95rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .user-card p strong {
+      color: var(--text-gray);
+    }
+    .user-card .status {
+      margin-top: 1rem;
+      font-weight: 600;
+      display: inline-block;
+      padding: 0.375rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    .user-card .status.blocked {
+      background-color: #ffe5e5;
+      color: #dc3545;
+    }
+    .user-card .status.active {
+      background-color: #e5ffea;
+      color: #28a745;
+    }
+    .user-card .actions {
+      margin-top: 1.5rem;
+      text-align: right;
+    }
+    .user-card .actions a {
+      display: inline-block;
+      padding: 0.625rem 1.25rem;
+      background: var(--primary-blue);
+      color: var(--bg-white);
+      text-decoration: none;
+      border-radius: var(--border-radius);
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: background var(--transition-speed);
+    }
+    .user-card .actions a:hover {
+      background: var(--primary-blue-hover);
+    }
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      background: var(--bg-white);
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 6px var(--card-shadow);
+    }
+    .empty-state p {
+      font-size: 1.1rem;
+      color: var(--text-gray);
+    }
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      .user-grid {
+        grid-template-columns: 1fr;
+      }
+      .stats {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Smart Pay Admin</div>
+    <nav>
+      <a href="/admin/dashboard" class="active">Dashboard</a>
+      
+    </nav>
+    <div class="logout">
+      <a href="/logout">Logout</a>
+    </div>
+  </div>
+  <div class="main-content">
+    <header>
+      <h1>All Registered Users</h1>
+    </header>
+    
+    <div class="stats">
+      <div class="stat-card">
+        <h3>Total Users</h3>
+        <p>{{ users|length }}</p>
+      </div>
+      <div class="stat-card">
+        <h3>Active Users</h3>
+        <p>{{ users|selectattr('is_blocked', 'equalto', false)|list|length }}</p>
+      </div>
+      <div class="stat-card">
+        <h3>Blocked Users</h3>
+        <p>{{ users|selectattr('is_blocked', 'equalto', true)|list|length }}</p>
+      </div>
+    </div>
+    
+    {% if users|length == 0 %}
+    <div class="empty-state">
+      <p>No users found in the system.</p>
+    </div>
+    {% else %}
+    <div class="user-grid">
+      {% for u in users %}
+      <div class="user-card">
+        <div>
+          <h2>{{ u.name }}</h2>
+          <p><strong>Account No:</strong> <span>{{ u.acc_no }}</span></p>
+          <p><strong>Email:</strong> <span>{{ u.email }}</span></p>
+          <p><strong>Balance:</strong> <span>₹{{ u.balance }}</span></p>
+          <p>
+            <strong>Status:</strong> 
+            <span class="status {% if u.is_blocked %}blocked{% else %}active{% endif %}">
+              {{ 'Blocked' if u.is_blocked else 'Active' }}
+            </span>
+          </p>
+        </div>
+        <div class="actions">
+          <a href="{{ url_for('admin.user_details', acc_no=u.acc_no) }}">
+            Manage
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</body>
+</html>

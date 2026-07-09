@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Dashboard</title>
+  <style>
+    :root {
+      --primary-blue: #1a73e8;
+      --light-blue: #e8f0fe;
+      --dark-blue: #0d47a1;
+      --text-dark: #202124;
+      --text-muted: #5f6368;
+      --white: #fff;
+      --gray-light: #f8f9fa;
+      --shadow: 0 1px 3px rgba(0,0,0,0.12);
+      --shadow-stronger: 0 2px 10px rgba(0,0,0,0.08);
+      --transition: all 0.2s ease;
+      --success-green: #34a853;
+      --error-red: #ea4335;
+      --warning-yellow: #fbbc04;
+      --success-green: #34a853;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Google Sans', 'Segoe UI', Arial, sans-serif; }
+    body { display:flex; flex-direction:column; min-height:100vh; background-color:var(--light-blue); }
+
+    /* Header styling */
+    .gpay-header {
+      background-color: var(--primary-blue);
+      color: var(--white);
+      padding: 16px 24px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .gpay-logo {
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--white);
+      margin-right: auto;
+      display: flex;
+      align-items: center;
+    }
+    
+    .gpay-logo span {
+      font-weight: 700;
+    }
+    
+    .user-profile {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: var(--white);
+      color: var(--primary-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Main content styling */
+    .main-content {
+      flex: 1;
+      width: 100%;
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    /* Error message styling */
+    .error-container {
+      background-color: var(--white);
+      border-left: 4px solid var(--error-red);
+      border-radius: 4px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      display: none;
+    }
+    
+    .error-container.visible {
+      display: block;
+    }
+    
+    .error-title {
+      color: var(--error-red);
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .error-title .icon {
+      margin-right: 8px;
+    }
+    
+    .error-message {
+      color: var(--text-dark);
+      font-size: 0.9rem;
+    }
+    
+    .error-close {
+      float: right;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    .welcome-card {
+      background-color: var(--white);
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-stronger);
+      margin-bottom: 24px;
+      border-top: 4px solid var(--primary-blue);
+    }
+    
+    .welcome-card h1 {
+      font-size: 1.5rem;
+      color: var(--primary-blue);
+      margin-bottom: 8px;
+    }
+    
+    .welcome-card .date-time {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .action-btn {
+      background-color: var(--white);
+      border-radius: 12px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      border: 1px solid var(--light-blue);
+    }
+    
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-stronger);
+      background-color: var(--light-blue);
+    }
+    
+    .action-btn .icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+    
+    .action-btn span {
+      color: var(--primary-blue);
+      font-size: 0.9rem;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    /* Content Grid */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    /* Profile Details */
+    .profile-section {
+      background-color: var(--white);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-stronger);
+      margin-bottom: 24px;
+      border-top: 3px solid var(--primary-blue);
+    }
+    
+    .profile-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--light-blue);
+      background-color: var(--white);
+    }
+    
+    .profile-header h2 {
+      color: var(--primary-blue);
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    
+    .profile-content {
+      padding: 8px 24px;
+    }
+    
+    .profile-details dl {
+      padding: 12px 0;
+    }
+    
+    .profile-details dt {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+    
+    .profile-details dd {
+      color: var(--text-dark);
+      font-size: 1rem;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--light-blue);
+    }
+    
+    .profile-details dd:last-child {
+      border-bottom: none;
+    }
+    
+    /* QR Code */
+    .qr-section {
+      text-align: center;
+      padding: 24px;
+    }
+    
+    .qr-section img {
+      max-width: 220px;
+      height: auto;
+      margin: 16px auto;
+      border: 8px solid var(--white);
+      box-shadow: var(--shadow);
+    }
+    
+    .upi-id {
+      font-size: 1rem;
+      color: var(--primary-blue);
+      margin: 16px 0;
+      font-weight: 500;
+    }
+    
+    .download-btn {
+      background-color: var(--primary-blue);
+      color: var(--white);
+      border: none;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 16px;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+    
+    .download-btn:hover {
+      background-color: var(--dark-blue);
+      box-shadow: var(--shadow-stronger);
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      background-color: var(--white);
+      display: none; /* Hidden by default on desktop */
+      justify-content: space-around;
+      padding: 12px 0;
+      box-shadow: 0 -1px 3px rgba(0,0,0,0.12);
+      position: sticky;
+      bottom: 0;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      width: 20%;
+    }
+    
+    .nav-item .icon {
+      font-size: 20px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    
+    .nav-item span {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    
+    .nav-item.active .icon,
+    .nav-item.active span {
+      color: var(--primary-blue);
+      font-weight: 500;
+    }
+    
+    /* Sidebar Navigation (for desktop) */
+    .sidebar-nav {
+      position: fixed;
+      left: 0;
+      top: 77px; /* Height of header */
+      bottom: 0;
+      width: 240px;
+      background-color: var(--white);
+      padding: 24px 0;
+      box-shadow: var(--shadow);
+    }
+    
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      padding: 12px 24px;
+      color: var(--text-dark);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+    
+    .sidebar-nav a:hover {
+      background-color: var(--light-blue);
+    }
+    
+    .sidebar-nav a.active {
+      background-color: var(--light-blue);
+      color: var(--primary-blue);
+      border-left: 4px solid var(--primary-blue);
+    }
+    
+    .sidebar-nav .icon {
+      margin-right: 12px;
+      font-size: 20px;
+    }
+
+    /* Responsive adjustments */
+    @media (min-width: 1024px) {
+      .main-content {
+        margin-left: 240px; /* Width of sidebar */
+      }
+      .sidebar-nav {
+        display: block;
+      }
+    }
+    
+    @media (max-width: 1023px) {
+      .sidebar-nav {
+        display: none;
+      }
+      .bottom-nav {
+        display: flex;
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 16px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+      .welcome-card h1 {
+        font-size: 1.2rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .main-content {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- GPay-style header -->
+  <!-- Desktop Sidebar Navigation -->
+  <div class="sidebar-nav">
+    <a href="/user/dashboard" class="active">
+      <div class="icon">📊</div>
+      <span>Dashboard</span>
+    </a>
+    <a href="/user/transactions">
+      <div class="icon">📝</div>
+      <span>Transactions</span>
+    </a>
+    <a href="{{ url_for('user.list_vaults') }}">
+      <div class="icon">🏦</div>
+      <span>My Vaults</span>
+    </a>
+    <a href="/user/send_money">
+      <div class="icon">📤</div>
+      <span>Send Money</span>
+    </a>
+    <a href="/user/profile/edit">
+      <div class="icon">👤</div>
+      <span>Edit Profile</span>
+    </a>
+    <a href="/logout">
+      <div class="icon">🚪</div>
+      <span>Logout</span>
+    </a>
+  </div>
+
+  <div class="gpay-header">
+    <div class="gpay-logo"><span>Smart Pay</span></div>
+    <div class="user-profile">{{ user.name[0] }}</div>
+  </div>
+
+  <div class="main-content">
+    <!-- Error Message Container -->
+    <div class="error-container" id="errorContainer">
+      <button class="error-close" id="closeError">×</button>
+      <div class="error-title">
+        <span class="icon">⚠️</span>
+        <span id="errorTitle">Error</span>
+      </div>
+      <div class="error-message" id="errorMessage">
+        <!-- Error messages will appear here -->
+      </div>
+    </div>
+
+    <!-- Welcome Card -->
+    <div class="welcome-card">
+      <h1>Welcome, {{ user.name }}</h1>
+      <div class="date-time" id="currentDateTime"></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <a href="/user/dashboard" class="action-btn">
+        <div class="icon">📊</div>
+        <span>Dashboard</span>
+      </a>
+      <a href="/user/transactions" class="action-btn">
+        <div class="icon">📝</div>
+        <span>Transactions</span>
+      </a>
+      <a href="{{ url_for('user.list_vaults') }}" class="action-btn">
+        <div class="icon">🏦</div>
+        <span>My Vaults</span>
+      </a>
+      <a href="/user/send_money" class="action-btn">
+        <div class="icon">📤</div>
+        <span>Send Money</span>
+      </a>
+    </div>
+
+    <!-- Content Grid for desktop layout -->
+    <div class="content-grid">
+      <!-- Profile Details -->
+      <div class="profile-section">
+        <div class="profile-header">
+          <h2>Your Details</h2>
+        </div>
+        <div class="profile-content">
+          <div class="profile-details">
+            <dl>
+              <dt>Name</dt>
+              <dd>{{ user.name }}</dd>
+              
+              <dt>Email</dt>
+              <dd>{{ user.email }}</dd>
+              
+              <dt>Phone</dt>
+              <dd>{{ user.phone }}</dd>
+              
+              <dt>Date of Birth</dt>
+              <dd>{{ user.dob }}</dd>
+              
+              <dt>Gender</dt>
+              <dd>{{ user.gender }}</dd>
+              
+              <dt>Address</dt>
+              <dd>{{ user.address }}</dd>
+              
+              <dt>UPI ID</dt>
+              <dd>{{ user.upi_id }}</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR Code Section -->
+      <div class="profile-section">
+        <div class="profile-header">
+          <h2>Your UPI QR</h2>
+        </div>
+        <div class="qr-section">
+          <img src="data:image/png;base64,{{ user.qr_code_b64 }}" alt="Your UPI QR Code"/>
+          <div class="upi-id">{{ user.upi_id }}</div>
+          <a 
+            href="data:image/png;base64,{{ user.qr_code_b64 }}" 
+            download="upi-{{ user.upi_id }}.png"
+            class="download-btn"
+          >
+            Download QR Code
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation for mobile -->
+  <div class="bottom-nav">
+    <a href="/user/dashboard" class="nav-item active">
+      <div class="icon">🏠</div>
+      <span>Home</span>
+    </a>
+    <a href="/user/transactions" class="nav-item">
+      <div class="icon">📝</div>
+      <span>History</span>
+    </a>
+    <a href="/user/send_money" class="nav-item">
+      <div class="icon">📤</div>
+      <span>Pay</span>
+    </a>
+     
+    <a href="{{ url_for('user.list_vaults') }}" class="nav-item">
+      <div class="icon">🏦</div>
+      <span>Vaults</span>
+    </a>
+    <a href="{{ url_for('user.donation_pool') }}"><span class="icon">🤝</span><span>Donations</span></a>
+    <a href="/user/profile/edit" class="nav-item">
+      <div class="icon">👤</div>
+      <span>Profile</span>
+    </a>
+  </div>
+
+  <script>
+    // Update date and time 
+    function updateDateTime() {
+      const now = new Date();
+      document.getElementById('currentDateTime').textContent =
+        now.toLocaleString('en-IN', {
+          weekday: 'long', year: 'numeric', month: 'long',
+          day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 60000);
+    
+    // Error message handling
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorMsg = urlParams.get('error');
+    const errorContainer = document.getElementById('errorContainer');
+    const errorMessage = document.getElementById('errorMessage');
+    const errorTitle = document.getElementById('errorTitle');
+    const closeError = document.getElementById('closeError');
+    
+    // Function to show error message
+    function showError(message, category = 'error') {
+      errorContainer.classList.add('visible');
+      errorMessage.textContent = message;
+      
+      if (category === 'warning') {
+        errorTitle.textContent = 'Warning';
+      } else if (category === 'info') {
+        errorTitle.textContent = 'Information';
+      } else {
+        errorTitle.textContent = 'Error';
+      }
+    }
+    
+    // Show error message if present in URL
+    if (errorMsg) {
+      showError(decodeURIComponent(errorMsg));
+    }
+    
+    // Close error message
+    if (closeError) {
+      closeError.addEventListener('click', function() {
+        errorContainer.classList.remove('visible');
+      });
+    }
+    
+    // Auto-hide error after 5 seconds
+    if (errorContainer.classList.contains('visible')) {
+      setTimeout(function() {
+        errorContainer.classList.remove('visible');
+      }, 5000);
+    }
+    
+    // Show different error types
+    document.addEventListener('DOMContentLoaded', function() {
+      // Handle server-side flash messages if they exist
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            showError('{{ message }}', '{{ category }}');
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      
+      // Example of showing an error from JavaScript (you can remove this)
+      // Uncomment to test error display:
+      // showError('This is a test error message');
+    });
+  </script>
+</body>
+</html>
+</body>
+</html>

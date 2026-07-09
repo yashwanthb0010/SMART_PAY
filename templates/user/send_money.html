@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Send Money</title>
+  <style>
+    :root {
+      --primary-blue: #1a73e8;
+      --light-blue: #e8f0fe;
+      --dark-blue: #0d47a1;
+      --text-dark: #202124;
+      --text-muted: #5f6368;
+      --white: #fff;
+      --gray-light: #f8f9fa;
+      --shadow: 0 1px 3px rgba(0,0,0,0.12);
+      --shadow-stronger: 0 2px 10px rgba(0,0,0,0.08);
+      --transition: all 0.2s ease;
+      --success-green: #34a853;
+      --error-red: #ea4335;
+      --warning-yellow: #fbbc04;
+    }
+    
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Google Sans', 'Segoe UI', Arial, sans-serif; }
+    body { display:flex; flex-direction:column; min-height:100vh; background-color:var(--light-blue); }
+    /* Header styling */
+    .gpay-header {
+      background-color: var(--primary-blue);
+      color: var(--white);
+      padding: 16px 24px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .gpay-logo {
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--white);
+      margin-right: auto;
+      display: flex;
+      align-items: center;
+    }
+    
+    .gpay-logo span {
+      font-weight: 700;
+    }
+    
+    .user-profile {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: var(--white);
+      color: var(--primary-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    /* Main content styling */
+    .main-content {
+      flex: 1;
+      width: 100%;
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .welcome-card {
+      background-color: var(--white);
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-stronger);
+      margin-bottom: 24px;
+      border-top: 4px solid var(--primary-blue);
+    }
+    
+    .welcome-card h1 {
+      font-size: 1.5rem;
+      color: var(--primary-blue);
+      margin-bottom: 8px;
+    }
+    /* Sidebar Navigation (for desktop) */
+    .sidebar-nav {
+      position: fixed;
+      left: 0;
+      top: 77px; /* Height of header */
+      bottom: 0;
+      width: 240px;
+      background-color: var(--white);
+      padding: 24px 0;
+      box-shadow: var(--shadow);
+    }
+    
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      padding: 12px 24px;
+      color: var(--text-dark);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+    
+    .sidebar-nav a:hover {
+      background-color: var(--light-blue);
+    }
+    
+    .sidebar-nav a.active {
+      background-color: var(--light-blue);
+      color: var(--primary-blue);
+      border-left: 4px solid var(--primary-blue);
+    }
+    
+    .sidebar-nav .icon {
+      margin-right: 12px;
+      font-size: 20px;
+    }
+    /* Form styling */
+    .form-section {
+      background-color: var(--white);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-stronger);
+      margin-bottom: 24px;
+      border-top: 3px solid var(--primary-blue);
+    }
+    
+    .form-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--light-blue);
+      background-color: var(--white);
+    }
+    
+    .form-header h2 {
+      color: var(--primary-blue);
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    
+    .form-content {
+      padding: 20px 24px;
+    }
+    /* QR Tools */
+    .qr-tools {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 12px;
+    }
+    .btn {
+      background-color: var(--primary-blue);
+      color: var(--white);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 24px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: var(--shadow);
+    }
+    .btn:hover {
+      background-color: var(--dark-blue);
+      box-shadow: var(--shadow-stronger);
+    }
+    .btn-outline {
+      background-color: var(--white);
+      color: var(--primary-blue);
+      border: 1px solid var(--primary-blue);
+    }
+    .btn-outline:hover {
+      background-color: var(--light-blue);
+    }
+    /* Form inputs */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-dark);
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+    .form-control {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+    }
+    .form-submit {
+      margin-top: 10px;
+      text-align: center;
+    }
+    .btn-primary {
+      background-color: var(--primary-blue);
+      padding: 12px 24px;
+      min-width: 180px;
+    }
+    .btn-primary:hover {
+      background-color: var(--dark-blue);
+      transform: translateY(-2px);
+    }
+    /* Bottom Navigation */
+    .bottom-nav {
+      background-color: var(--white);
+      display: none; /* Hidden by default on desktop */
+      justify-content: space-around;
+      padding: 12px 0;
+      box-shadow: 0 -1px 3px rgba(0,0,0,0.12);
+      position: sticky;
+      bottom: 0;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      width: 20%;
+    }
+    
+    .nav-item .icon {
+      font-size: 20px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    
+    .nav-item span {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    
+    .nav-item.active .icon,
+    .nav-item.active span {
+      color: var(--primary-blue);
+      font-weight: 500;
+    }
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      display: none;
+    }
+    
+    .modal-content {
+      background: var(--white);
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+    }
+    
+    .modal-content h3 {
+      margin-bottom: 16px;
+      color: var(--primary-blue);
+      font-size: 1.2rem;
+    }
+    
+    .modal-content video {
+      border: 2px dashed #dadce0;
+      border-radius: 8px;
+      max-width: 100%;
+      margin: 16px 0;
+      background: var(--white);
+    }
+    
+    .modal-content .status {
+      margin: 16px 0;
+      font-weight: 500;
+      color: var(--text-dark);
+    }
+    
+    .modal-content .confirm-btn {
+      background: var(--primary-blue);
+      color: var(--white);
+      padding: 10px 24px;
+      border: none;
+      border-radius: 24px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 16px;
+    }
+    
+    .modal-content .confirm-btn:hover {
+      background: var(--dark-blue);
+      box-shadow: var(--shadow);
+    }
+    /* Back link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 12px;
+      color: var(--primary-blue);
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .back-link:hover {
+      color: var(--dark-blue);
+    }
+    
+    .back-link::before {
+      content: '←';
+      margin-right: 0.5rem;
+      font-size: 1.2rem;
+    }
+    /* Responsive adjustments */
+    @media (min-width: 1024px) {
+      .main-content {
+        margin-left: 240px; /* Width of sidebar */
+      }
+      .sidebar-nav {
+        display: block;
+      }
+    }
+    
+    @media (max-width: 1023px) {
+      .sidebar-nav {
+        display: none;
+      }
+      .bottom-nav {
+        display: flex;
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 16px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .welcome-card h1 {
+        font-size: 1.2rem;
+      }
+      .form-section {
+        margin-bottom: 16px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .main-content {
+        padding: 12px;
+      }
+      .qr-tools {
+        flex-direction: column;
+        align-items: center;
+      }
+      .qr-tools button, .qr-tools label {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Desktop Sidebar Navigation -->
+  <div class="sidebar-nav">
+    <a href="/user/dashboard">
+      <div class="icon">📊</div>
+      <span>Dashboard</span>
+    </a>
+     <a href="{{ url_for('user.donation_pool') }}"><span class="icon">🤝</span><span>Donations</span></a>
+    <a href="/user/transactions">
+      <div class="icon">📝</div>
+      <span>Transactions</span>
+    </a>
+    <a href="{{ url_for('user.list_vaults') }}">
+      <div class="icon">🏦</div>
+      <span>My Vaults</span>
+    </a>
+    <a href="/user/send_money" class="active">
+      <div class="icon">📤</div>
+      <span>Send Money</span>
+    </a>
+    <a href="/user/profile/edit">
+      <div class="icon">👤</div>
+      <span>Edit Profile</span>
+    </a>
+    <a href="/logout">
+      <div class="icon">🚪</div>
+      <span>Logout</span>
+    </a>
+  </div>
+  <div class="gpay-header">
+    <div class="gpay-logo">My<span>Bank</span></div>
+    <div class="user-profile">
+      {% if user is defined and user.name %}
+        {{ user.name[0] }}
+      {% else %}
+        U
+      {% endif %}
+    </div>
+  </div>
+  <div class="main-content">
+    <!-- Welcome Card -->
+    <div class="welcome-card">
+      <h1>Send Money</h1>
+    </div>
+    <!-- Send Money Form Section -->
+    <div class="form-section">
+      <div class="form-header">
+        <h2>Transfer Details</h2>
+      </div>
+      <div class="form-content">
+        <!-- QR Tools -->
+        <div class="qr-tools">
+          <button type="button" id="scanQrBtn" class="btn">Scan QR Code</button>
+          <input type="file" id="uploadQrInput" accept="image/*" style="display:none;" />
+          <label for="uploadQrInput" class="btn btn-outline">
+            Upload QR Image
+          </label>
+        </div>
+        <!-- Send Form -->
+        <form method="POST" id="sendMoneyForm">
+          <div class="form-group">
+            <label for="recipient_upi">Recipient UPI ID</label>
+            <input
+              id="recipient_upi"
+              name="recipient_upi"
+              type="text"
+              class="form-control"
+              placeholder="e.g. alice.1a2b3c@demo"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="amount">Amount (₹)</label>
+            <input
+              id="amount"
+              name="amount"
+              type="number"
+              step="0.01"
+              min="0"
+              class="form-control"
+              placeholder="Enter amount"
+              required
+            />
+          </div>
+          <input type="hidden" name="face_data" id="face_data"/>
+          <div class="form-submit">
+            <button type="button" id="sendButton" class="btn btn-primary">
+              Send Money
+            </button>
+          </div>
+        </form>
+        <a class="back-link" href="/user/dashboard">Back to Dashboard</a>
+      </div>
+    </div>
+  </div>
+  <!-- Bottom Navigation for mobile -->
+  <div class="bottom-nav">
+    <a href="/user/dashboard" class="nav-item">
+      <div class="icon">🏠</div>
+      <span>Home</span>
+    </a>
+    <a href="/user/transactions" class="nav-item">
+      <div class="icon">📝</div>
+      <span>History</span>
+    </a>
+    <a href="/user/send_money" class="nav-item active">
+      <div class="icon">📤</div>
+      <span>Pay</span>
+    </a>
+    <a href="{{ url_for('user.list_vaults') }}" class="nav-item">
+      <div class="icon">🏦</div>
+      <span>Vaults</span>
+    </a>
+    <a href="/user/profile/edit" class="nav-item">
+      <div class="icon">👤</div>
+      <span>Profile</span>
+    </a>
+  </div>
+  <!-- Face Verification Modal -->
+  <div class="modal-overlay" id="faceVerificationModal">
+    <div class="modal-content">
+      <h3>Face Verification</h3>
+      <p>Please look at the camera for verification</p>
+      <video id="video" width="320" height="240" autoplay></video>
+      <div class="status" id="detectionStatus">Detecting face...</div>
+      <button class="confirm-btn" id="confirmButton" style="display:none;">
+        Confirm Send
+      </button>
+    </div>
+  </div>
+  <!-- QR Scan Modal -->
+  <div id="qrModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+      <h3>Scan UPI QR Code</h3>
+      <video id="qrVideo" autoplay playsinline style="max-width:100%;"></video>
+      <canvas id="qrCanvas" style="display:none;"></canvas>
+      <div class="status" id="qrStatus" style="margin:1rem 0;">
+        Looking for QR code…
+      </div>
+      <button class="confirm-btn" id="qrCloseBtn">Cancel</button>
+    </div>
+  </div>
+  <!-- Include jsQR for QR decoding -->
+  <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+  <script>
+    // Elements
+    const scanQrBtn     = document.getElementById('scanQrBtn');
+    const uploadQrInput = document.getElementById('uploadQrInput');
+    const qrModal       = document.getElementById('qrModal');
+    const qrVideo       = document.getElementById('qrVideo');
+    const qrCanvas      = document.getElementById('qrCanvas');
+    const qrStatus      = document.getElementById('qrStatus');
+    const qrCloseBtn    = document.getElementById('qrCloseBtn');
+    const recipUpi      = document.getElementById('recipient_upi');
+    const sendButton    = document.getElementById('sendButton');
+    const faceModal     = document.getElementById('faceVerificationModal');
+    const video         = document.getElementById('video');
+    const detectionStatus = document.getElementById('detectionStatus');
+    const confirmBtn    = document.getElementById('confirmButton');
+    const faceInput     = document.getElementById('face_data');
+    const sendForm      = document.getElementById('sendMoneyForm');
+    let qrStream, qrCtx, qrScanInterval;
+    let faceStream, faceInterval, faceDetected = false;
+    // 1) QR Scan via Webcam
+    scanQrBtn.addEventListener('click', async () => {
+      qrModal.style.display = 'flex';
+      qrStatus.textContent = 'Looking for QR code…';
+      try {
+        qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        qrVideo.srcObject = qrStream;
+        qrCtx = qrCanvas.getContext('2d');
+        qrScanInterval = setInterval(() => {
+          if (qrVideo.readyState === qrVideo.HAVE_ENOUGH_DATA) {
+            qrCanvas.width = qrVideo.videoWidth;
+            qrCanvas.height = qrVideo.videoHeight;
+            qrCtx.drawImage(qrVideo, 0, 0);
+            const imgData = qrCtx.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
+            const code = jsQR(imgData.data, imgData.width, imgData.height);
+            if (code) {
+              try {
+                const data = JSON.parse(code.data);
+                recipUpi.value = data.upi_id;
+              } catch {
+                recipUpi.value = code.data;
+              }
+              closeQrModal();
+            }
+          }
+        }, 200);
+      } catch (err) {
+        qrStatus.textContent = 'Camera error: ' + err.message;
+      }
+    });
+    qrCloseBtn.addEventListener('click', closeQrModal);
+    function closeQrModal() {
+      qrModal.style.display = 'none';
+      clearInterval(qrScanInterval);
+      qrStream.getTracks().forEach(track => track.stop());
+    }
+    // 2) QR Scan via File Upload
+    uploadQrInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        qrCanvas.width = img.width;
+        qrCanvas.height= img.height;
+        qrCtx = qrCanvas.getContext('2d');
+        qrCtx.drawImage(img, 0, 0);
+        const imgData = qrCtx.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
+        const code = jsQR(imgData.data, imgData.width, imgData.height);
+        if (code) {
+          try {
+            const data = JSON.parse(code.data);
+            recipUpi.value = data.upi_id;
+          } catch {
+            recipUpi.value = code.data;
+          }
+        } else {
+          alert('No QR code found.');
+        }
+      };
+      img.src = URL.createObjectURL(file);
+    });
+    // 3) Face Verification Flow
+    sendButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Basic form validation
+      if (!recipUpi.value || !document.getElementById('amount').value) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+      faceModal.style.display = 'flex';
+      startFaceCamera();
+    });
+    function startFaceCamera() {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          faceStream = stream;
+          video.srcObject = stream;
+          faceInterval = setInterval(simulateFaceDetection, 2000);
+        })
+        .catch(err => {
+          detectionStatus.textContent = 'Camera error: ' + err.message;
+        });
+    }
+    function simulateFaceDetection() {
+      if (faceDetected) return;
+      // Simulate a 2-second detection delay
+      faceDetected = true;
+      clearInterval(faceInterval);
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height= video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      faceInput.value = canvas.toDataURL('image/jpeg');
+      detectionStatus.textContent = 'Face detected! Confirm to proceed.';
+      detectionStatus.style.color = 'var(--success-green)';
+      confirmBtn.style.display = 'inline-block';
+    }
+    confirmBtn.addEventListener('click', () => {
+      // Stop and hide face modal
+      faceStream.getTracks().forEach(t => t.stop());
+      faceModal.style.display = 'none';
+      // Submit final form
+      sendForm.submit();
+    });
+  </script>
+</body>
+</html>

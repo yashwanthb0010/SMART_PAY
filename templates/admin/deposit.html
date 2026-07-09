@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin – Deposit to {{ user.name }}</title>
+  <style>
+    :root {
+      --primary-blue: #1a73e8;
+      --light-blue: #e8f0fe;
+      --secondary-blue: #174ea6;
+      --text-dark: #202124;
+      --text-light: #5f6368;
+      --white: #fff;
+      --gray-light: #f8f9fa;
+      --gray-border: #dadce0;
+      --input-border: #dadce0;
+      --input-focus: #1a73e8;
+      --success-green: #0f9d58;
+      --error-red: #ea4335;
+      --shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+      --transition: all 0.2s ease;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+    }
+    
+    body {
+      background-color: var(--gray-light);
+      color: var(--text-dark);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    
+    .container {
+      background: var(--white);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3);
+      max-width: 450px;
+      width: 100%;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .container:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--primary-blue);
+    }
+    
+    h1 {
+      color: var(--text-dark);
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--gray-border);
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-light);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    input[type="number"] {
+      width: 100%;
+      padding: 0.75rem 0.875rem;
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: var(--transition);
+      background-color: var(--white);
+      color: var(--text-dark);
+    }
+    
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 1px var(--input-focus);
+    }
+    
+    video {
+      width: 100%;
+      border-radius: 4px;
+      overflow: hidden;
+      background-color: var(--gray-light);
+      border: 1px solid var(--gray-border);
+      margin-bottom: 0.75rem;
+      box-shadow: inset 0 1px 2px rgba(27,31,35,0.075);
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: center;
+      width: 100%;
+    }
+    
+    .btn-secondary {
+      background: var(--light-blue);
+      color: var(--primary-blue);
+      margin-bottom: 0.75rem;
+    }
+    
+    .btn-secondary:hover {
+      background: #d2e3fc;
+    }
+    
+    .btn-primary {
+      background: var(--primary-blue);
+      color: var(--white);
+    }
+    
+    .btn-primary:hover {
+      background: var(--secondary-blue);
+      box-shadow: 0 1px 2px rgba(60,64,67,0.3);
+    }
+    
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      color: var(--primary-blue);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.875rem;
+      margin-top: 1.5rem;
+      padding: 0.5rem 0;
+      transition: var(--transition);
+    }
+    
+    .back-link:hover {
+      color: var(--secondary-blue);
+    }
+    
+    .back-link .icon {
+      margin-right: 0.5rem;
+    }
+    
+    .capture-status {
+      display: none;
+      padding: 0.5rem;
+      margin-bottom: 0.75rem;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 0.875rem;
+      background-color: var(--light-blue);
+      color: var(--primary-blue);
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease forwards;
+    }
+    
+    /* Responsive */
+    @media (max-width: 480px) {
+      .container {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+    
+  <div class="container fade-in">
+    <h1>Deposit to {{ user.name }}</h1>
+    <form method="POST">
+      <div class="form-group">
+        <label for="amount">Amount (₹)</label>
+        <input type="number" id="amount" name="amount" step="0.01" required/>
+      </div>
+      
+      <div class="form-group">
+        <label for="video">Admin face verification</label>
+        <input type="hidden" name="face_data" id="face_data"/>
+        <video id="video" autoplay></video>
+        <div id="captureStatus" class="capture-status">Face verification complete</div>
+        <button type="button" id="capture" class="btn btn-secondary">Verify identity</button>
+      </div>
+      
+      <button type="submit" class="btn btn-primary">Complete deposit</button>
+    </form>
+    <a href="{{ url_for('admin.user_details', acc_no=user.acc_no) }}" class="back-link">
+      <span class="icon">←</span> Return to user details
+    </a>
+  </div>
+  
+  <script>
+    // Face capture functionality
+    const video = document.getElementById('video');
+    const capture = document.getElementById('capture');
+    const faceInput = document.getElementById('face_data');
+    const captureStatus = document.getElementById('captureStatus');
+    
+    navigator.mediaDevices.getUserMedia({video: true})
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        console.error("Error accessing camera:", err);
+      });
+    
+    capture.onclick = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      faceInput.value = canvas.toDataURL('image/jpeg');
+      
+      // Update UI to show success
+      capture.textContent = "Verified";
+      capture.style.backgroundColor = "#e6f4ea";
+      capture.style.color = "#0f9d58";
+      captureStatus.style.display = "block";
+      captureStatus.style.backgroundColor = "#e6f4ea";
+      captureStatus.style.color = "#0f9d58";
+    };
+  </script>
+</body>
+</html>

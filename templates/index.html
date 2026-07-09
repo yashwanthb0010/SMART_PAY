@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureBank - Online Banking Solution</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #0052cc;
+      --primary-light: #e6f0ff;
+      --primary-dark: #003d99;
+      --accent: #00a3bf;
+      --success: #36b37e;
+      --warning: #ffab00;
+      --danger: #ff5630;
+      --bg-white: #ffffff;
+      --bg-light: #f5f8fa;
+      --text-dark: #172b4d;
+      --text-medium: #5e6c84;
+      --text-light: #8993a4;
+      --border-color: #dfe1e6;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    body {
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    
+    .navbar {
+      background-color: var(--primary);
+      padding: 1rem 2rem;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.25rem;
+      text-decoration: none;
+    }
+    
+    .logo i {
+      margin-right: 0.5rem;
+      font-size: 1.5rem;
+    }
+    
+    .nav-links {
+      display: flex;
+      align-items: center;
+    }
+    
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      margin-left: 1.5rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+    }
+    
+    .nav-links a:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .nav-links .btn-login {
+      background-color: white;
+      color: var(--primary);
+    }
+    
+    .nav-links .btn-register {
+      background-color: var(--accent);
+      color: white;
+    }
+    
+    .hero {
+      background-color: var(--primary);
+      color: white;
+      padding: 4rem 2rem;
+      text-align: center;
+      clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+      margin-bottom: 3rem;
+    }
+    
+    .hero h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+    
+    .hero p {
+      font-size: 1.1rem;
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      opacity: 0.9;
+    }
+    
+    .cta-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      background-color: white;
+      color: var(--primary);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+    }
+    
+    .btn-secondary {
+      background-color: transparent;
+      color: white;
+      border: 2px solid white;
+    }
+    
+    .btn-secondary:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-3px);
+    }
+    
+    .features {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    
+    .section-header h2 {
+      font-size: 2rem;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+    
+    .section-header p {
+      color: var(--text-medium);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .feature-cards {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    
+    .feature-card {
+      background-color: var(--bg-white);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      flex: 1;
+      min-width: 300px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+    }
+    
+    .feature-icon {
+      font-size: 2.5rem;
+      color: var(--primary);
+      background-color: var(--primary-light);
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      margin-bottom: 1.5rem;
+    }
+    
+    .feature-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: var(--text-dark);
+    }
+    
+    .feature-card p {
+      color: var(--text-medium);
+      margin-bottom: 1.5rem;
+    }
+    
+    .feature-card .btn {
+      margin-top: auto;
+      background-color: var(--primary-light);
+      color: var(--primary);
+    }
+    
+    .feature-card .btn:hover {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .testimonials {
+      background-color: var(--primary-light);
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+    
+    .testimonial-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .statistics {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 3rem;
+      max-width: 1200px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      color: var(--text-medium);
+      font-size: 1rem;
+    }
+    
+    .footer {
+      background-color: var(--primary-dark);
+      color: white;
+      padding: 3rem 2rem;
+    }
+    
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 2rem;
+    }
+    
+    .footer-column {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    .footer-column h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.5rem;
+    }
+    
+    .footer-column ul {
+      list-style: none;
+    }
+    
+    .footer-column ul li {
+      margin-bottom: 0.75rem;
+    }
+    
+    .footer-column ul li a {
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    
+    .footer-column ul li a:hover {
+      color: white;
+      padding-left: 5px;
+    }
+    
+    .copyright {
+      text-align: center;
+      padding-top: 2rem;
+      margin-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .theme-toggle {
+      background: transparent;
+      color: white;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .theme-toggle:hover {
+      transform: rotate(30deg);
+    }
+    
+    /* Dark Mode Styles */
+    .dark-mode {
+      --bg-light: #1a1c23;
+      --bg-white: #282c35;
+      --text-dark: #e4e6eb;
+      --text-medium: #b0b3b8;
+      --text-light: #8a8d91;
+      --border-color: #3e4042;
+      --primary-light: #17263d;
+    }
+    
+    .dark-mode .navbar {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .dark-mode .feature-card {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+      
+      .feature-card {
+        min-width: 100%;
+      }
+      
+      .statistics {
+        gap: 2rem;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .navbar {
+        padding: 1rem;
+      }
+      
+      .logo span {
+        display: none;
+      }
+      
+      .hero {
+        padding: 3rem 1rem;
+      }
+      
+      .cta-buttons {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="/" class="logo">
+      <i class="fas fa-shield-alt"></i>
+      <span>Smart Pay</span>
+    </a>
+    
+    
+    
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+      <i class="far fa-moon"></i>
+    </button>
+  </nav>
+  
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>SMART PAY</h1>
+    <p>Experience hassle-free online banking with industry-leading security features and a user-friendly interface designed for your convenience.</p>
+    <div class="cta-buttons">
+      <a href="/register" class="btn btn-primary">Get Started</a>
+      <a href="/login" class="btn btn-secondary">Sign in</a>
+    </div>
+  </section>
+  
+  <!-- Features Section -->
+  <section class="features">
+    <div class="section-header">
+      <h2>Banking at Your Fingertips</h2>
+      <p>Access a comprehensive suite of banking services anytime, anywhere.</p>
+    </div>
+    
+    <div class="feature-cards">
+      <!-- Deposit Feature Card -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-hand-holding-usd"></i>
+        </div>
+        <h3>Easy Deposits</h3>
+        <p>Deposit funds to your account instantly with multiple payment methods. Track your transactions in real-time and manage your finances with ease.</p>
+        <a class="btn">Deposit Now</a>
+      </div>
+      
+      <!-- Send Money Feature Card -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-paper-plane"></i>
+        </div>
+        <h3>Send Money</h3>
+        <p>Transfer funds to friends, family, or businesses instantly with zero fees. Schedule recurring payments and keep track of your spending habits.</p>
+        <a class="btn">Transfer Funds</a>
+      </div>
+      
+      <!-- Admin Dashboard Feature Card -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <h3>Admin Dashboard</h3>
+        <p>Access advanced analytics, manage user accounts, and oversee all banking operations from a single, intuitive dashboard designed for efficiency.</p>
+        <a  class="btn">Admin Access</a>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Statistics Section -->
+
+  
+  <!-- Testimonials Section -->
+  <section class="testimonials">
+    <div class="section-header">
+      <h2>Trusted by Thousands</h2>
+      <p>See what our users say about their experience with SecureBank.</p>
+    </div>
+    
+    <div class="testimonial-container">
+      <div id="testimonial-text">
+        "SecureBank has transformed the way I manage my finances. The interface is intuitive, transactions are lightning-fast, and their security measures give me peace of mind."
+      </div>
+      <p id="testimonial-author">- Sarah Johnson, Small Business Owner</p>
+    </div>
+  </section>
+  
+  <!-- Footer -->
+  <footer class="footer">
+   
+      
+     
+      
+      
+      
+      
+    
+    <div class="copyright">
+      &copy; 2025 SecureBank. All rights reserved.
+    </div>
+  </footer>
+  
+  <script>
+    // Theme Toggle Functionality
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = themeToggle.querySelector('i');
+    
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      
+      if (document.body.classList.contains('dark-mode')) {
+        themeIcon.classList.remove('fa-moon');
+        themeIcon.classList.add('fa-sun');
+      } else {
+        themeIcon.classList.remove('fa-sun');
+        themeIcon.classList.add('fa-moon');
+      }
+    });
+    
+    // Simple Testimonial Rotation
+    const testimonials = [
+      {
+        text: "SecureBank has transformed the way I manage my finances. The interface is intuitive, transactions are lightning-fast, and their security measures give me peace of mind.",
+        author: "Sarah Johnson, Small Business Owner"
+      },
+      {
+        text: "As someone who travels frequently, having access to my banking from anywhere in the world has been invaluable. SecureBank's mobile app is simply outstanding.",
+        author: "Michael Chen, Travel Blogger"
+      },
+      {
+        text: "The customer service at SecureBank is exceptional. When I had an issue with a transaction, their team resolved it within minutes. Truly impressive!",
+        author: "Robert Patel, Freelance Developer"
+      }
+    ];
+    
+    let currentTestimonial = 0;
+    const testimonialText = document.getElementById('testimonial-text');
+    const testimonialAuthor = document.getElementById('testimonial-author');
+    
+    function rotateTestimonials() {
+      currentTestimonial = (currentTestimonial + 1) % testimonials.length;
+      
+      testimonialText.style.opacity = '0';
+      testimonialAuthor.style.opacity = '0';
+      
+      setTimeout(() => {
+        testimonialText.textContent = `"${testimonials[currentTestimonial].text}"`;
+        testimonialAuthor.textContent = `- ${testimonials[currentTestimonial].author}`;
+        
+        testimonialText.style.opacity = '1';
+        testimonialAuthor.style.opacity = '1';
+      }, 500);
+    }
+    
+    // Change testimonial every 5 seconds
+    setInterval(rotateTestimonials, 5000);
+    
+    testimonialText.style.transition = 'opacity 0.5s ease';
+    testimonialAuthor.style.transition = 'opacity 0.5s ease';
+  </script>
+</body>
+</html>

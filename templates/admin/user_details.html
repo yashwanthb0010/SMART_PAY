@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>User Details – {{ user.name }}</title>
+  <style>
+    :root {
+      --primary-blue: #007bff;
+      --primary-blue-hover: #0056b3;
+      --light-blue: #e9f5ff;
+      --sidebar-width: 240px;
+      --bg-white: #ffffff;
+      --text-dark: #212529;
+      --text-gray: #6c757d;
+      --card-shadow: rgba(0, 0, 0, 0.1);
+      --border-light: rgba(255, 255, 255, 0.2);
+      --border-radius: 8px;
+      --transition-speed: 0.3s;
+      --table-header-bg: #e9ecef;
+      --danger-red: #dc3545;
+      --danger-red-hover: #c82333;
+      --warning-yellow: #ffc107;
+      --success-green: #28a745;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    body {
+      display: flex;
+      min-height: 100vh;
+      background: var(--light-blue);
+      color: var(--text-dark);
+    }
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--primary-blue);
+      color: var(--bg-white);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 3px 0 10px rgba(0, 0, 0, 0.15);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .sidebar .logo {
+      font-size: 1.5rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 1.5rem 0;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .sidebar nav {
+      flex: 1;
+      padding: 1.5rem 0;
+    }
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      padding: 0.875rem 1.5rem;
+      color: var(--bg-white);
+      text-decoration: none;
+      transition: all var(--transition-speed);
+      border-left: 3px solid transparent;
+      margin: 0.25rem 0;
+    }
+    .sidebar nav a:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-left: 3px solid var(--bg-white);
+      padding-left: 1.75rem;
+    }
+    .sidebar nav a.active {
+      background: rgba(255, 255, 255, 0.2);
+      border-left: 3px solid var(--bg-white);
+    }
+    .sidebar .logout {
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid var(--border-light);
+    }
+    .sidebar .logout a {
+      display: block;
+      color: var(--bg-white);
+      text-decoration: none;
+      padding: 0.625rem;
+      border-radius: var(--border-radius);
+      text-align: center;
+      transition: all var(--transition-speed);
+      font-weight: 500;
+    }
+    .sidebar .logout a:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .main-content header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(0, 123, 255, 0.2);
+    }
+    .main-content h1 {
+      color: var(--primary-blue);
+      font-size: 1.75rem;
+      font-weight: 600;
+    }
+    .main-content h2 {
+      color: var(--primary-blue);
+      font-size: 1.25rem;
+      margin-bottom: 1.25rem;
+      font-weight: 600;
+    }
+    .info-card {
+      background: var(--bg-white);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px var(--card-shadow);
+      margin-bottom: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      align-items: center;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .info-item {
+      flex: 1;
+      min-width: 180px;
+    }
+    .info-item p {
+      display: flex;
+      justify-content: space-between;
+      margin: 0.5rem 0;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .info-item p:last-child {
+      border-bottom: none;
+    }
+    .info-item p strong {
+      color: var(--text-gray);
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.375rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .status-badge.blocked {
+      background-color: #ffe5e5;
+      color: #dc3545;
+    }
+    .status-badge.active {
+      background-color: #e5ffea;
+      color: #28a745;
+    }
+    .table-container {
+      background: var(--bg-white);
+      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 6px var(--card-shadow);
+      margin-bottom: 2rem;
+      overflow-x: auto;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+    thead {
+      background: var(--table-header-bg);
+    }
+    th, td {
+      padding: 0.875rem 1rem;
+      border: 1px solid #dee2e6;
+      text-align: left;
+    }
+    th {
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    tbody tr:nth-child(even) {
+      background: #f8f9fa;
+    }
+    tbody tr:hover {
+      background: rgba(0, 123, 255, 0.05);
+    }
+    .form-container {
+      background: var(--bg-white);
+      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 6px var(--card-shadow);
+      max-width: 600px;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .form-container h2 {
+      border-bottom: 1px solid rgba(0, 123, 255, 0.1);
+      padding-bottom: 0.625rem;
+      margin-bottom: 1.25rem;
+    }
+    .form-container .actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
+    }
+    .form-container .btn {
+      padding: 0.75rem 1.25rem;
+      color: var(--bg-white);
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: all var(--transition-speed);
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+    .btn-block {
+      background: var(--danger-red);
+    }
+    .btn-block:hover {
+      background: var(--danger-red-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+    }
+    .btn-delete {
+      background: #6c757d;
+    }
+    .btn-delete:hover {
+      background: #5a6268;
+      transform: translateY(-2px);
+      box-shadow: 0 2px 5px rgba(108, 117, 125, 0.3);
+    }
+    .btn-verify {
+      background: var(--primary-blue);
+      width: 100%;
+      text-align: center;
+      display: block; /* Always display the button */
+    }
+    .btn-verify:hover {
+      background: var(--primary-blue-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+    }
+    .btn-verify.disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .face-capture {
+      margin-top: 1.5rem;
+      text-align: center;
+      display: none;
+    }
+    .face-capture.show {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    .face-capture-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .face-capture-header h3 {
+      font-size: 1.1rem;
+      color: var(--text-dark);
+    }
+    .face-capture-status {
+      font-size: 0.875rem;
+      color: var(--text-gray);
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .face-capture-status.success {
+      color: var(--success-green);
+      font-weight: bold;
+    }
+    .face-capture-status.error {
+      color: var(--danger-red);
+      font-weight: bold;
+    }
+    .video-container {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    }
+    .face-capture video {
+      display: block;
+      width: 100%;
+      background: #000;
+      border-radius: 8px;
+    }
+    .camera-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 2px dashed var(--primary-blue);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .camera-overlay:before {
+      content: '';
+      width: 80%;
+      height: 80%;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 8px;
+    }
+    .camera-overlay.verified {
+      border: 2px solid var(--success-green);
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 1rem;
+      color: var(--text-gray);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all var(--transition-speed);
+    }
+    .back-link:hover {
+      color: var(--primary-blue);
+    }
+    .back-link:before {
+      content: "←";
+      margin-right: 0.5rem;
+      font-size: 1.1rem;
+    }
+    .cancel-btn {
+      margin-top: 1rem;
+      background: transparent;
+      border: 1px solid var(--text-gray);
+      color: var(--text-gray);
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: all var(--transition-speed);
+    }
+    .cancel-btn:hover {
+      background: rgba(0,0,0,0.05);
+      color: var(--text-dark);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      .info-card {
+        flex-direction: column;
+      }
+      .form-container .actions {
+        flex-direction: column;
+      }
+      .form-container .btn {
+        width: 100%;
+      }
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+    }
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+    @keyframes scanning {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 0% 100%; }
+    }
+    .scanning-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(transparent 0%, rgba(0, 123, 255, 0.2) 50%, transparent 100%);
+      background-size: 100% 200%;
+      animation: scanning 2s linear infinite;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .scanning-overlay.active {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Smart Pay Admin</div>
+    <nav>
+      <a href="/admin/dashboard">All Users</a>
+      <a href="/admin/dashboard">Dashboard</a>
+       <a href="{{ url_for('admin.deposit_user', acc_no=user.acc_no) }}">Deposit</a>
+<a href="{{ url_for('admin.withdraw_user', acc_no=user.acc_no) }}">Withdraw</a>
+
+    </nav>
+    <div class="logout">
+      <a href="/logout">Logout</a>
+    </div>
+  </div>
+  <div class="main-content">
+    <header>
+      <h1>{{ user.name }} <span style="font-size: 1rem; color: var(--text-gray);">(Acc: {{ user.acc_no }})</span></h1>
+      <div>
+        <span class="status-badge {% if user.is_blocked %}blocked{% else %}active{% endif %}">
+          {{ 'Blocked' if user.is_blocked else 'Active' }}
+        </span>
+      </div>
+    </header>
+    
+    <div class="info-card">
+      <div class="info-item">
+        <h2>Account Information</h2>
+        <p><strong>Email:</strong> <span>{{ user.email }}</span></p>
+        <p><strong>Balance:</strong> <span>₹{{ user.balance }}</span></p>
+        <p><strong>Account Number:</strong> <span>{{ user.acc_no }}</span></p>
+        <p><strong>Status:</strong> 
+          <span class="status-badge {% if user.is_blocked %}blocked{% else %}active{% endif %}">
+            {{ 'Blocked' if user.is_blocked else 'Active' }}
+          </span>
+        </p>
+      </div>
+    </div>
+
+    <h2>Transactions History</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Date &amp; Time</th>
+            <th>Type</th>
+            <th>Amount (₹)</th>
+            <th>Recipient</th>
+            <th>Balance After (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in transactions %}
+          <tr>
+            <td>{{ t.timestamp.strftime("%Y-%m-%d %H:%M") }}</td>
+            <td>{{ t.type|capitalize }}</td>
+            <td>{{ "%0.2f"|format(t.amount) }}</td>
+            <td>{{ t.recipient_acc if t.recipient_acc else '—' }}</td>
+            <td>{{ "%0.2f"|format(t.resulting_balance) }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" style="text-align:center; padding:2rem;">
+              No transactions available.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-container fade-in">
+      <h2>Administrative Actions</h2>
+      <form method="POST" id="adminForm" action="{{ url_for('admin.user_details', acc_no=user.acc_no) }}">
+        <div id="actionButtons" class="actions">
+          <button type="button" id="blockBtn" class="btn btn-block">Block Account</button>
+          <button type="button" id="deleteBtn" class="btn btn-delete">Delete User</button>
+        </div>
+        
+        <div class="face-capture" id="faceCapture">
+          <div class="face-capture-header">
+            <h3>Face Verification Required</h3>
+          </div>
+          <p class="face-capture-status" id="captureStatus">Starting camera for verification...</p>
+          
+          <div class="video-container">
+            <video id="video" width="320" height="240" autoplay playsinline></video>
+            <div class="camera-overlay" id="cameraOverlay"></div>
+            <div class="scanning-overlay" id="scanningOverlay"></div>
+          </div>
+          
+          <input type="hidden" name="face_data" id="face_data"/>
+          <input type="hidden" name="action" id="selectedAction"/>
+          
+          <button type="button" id="verifyBtn" class="btn btn-verify pulse disabled">Verify &amp; Complete Action</button>
+          <button type="button" id="cancelBtn" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <a class="back-link" href="/admin/dashboard">Back to All Users</a>
+  </div>
+
+  <script>
+    // Elements
+    const blockBtn = document.getElementById('blockBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const actionButtons = document.getElementById('actionButtons');
+    const faceCapture = document.getElementById('faceCapture');
+    const video = document.getElementById('video');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const faceInput = document.getElementById('face_data');
+    const selectedAction = document.getElementById('selectedAction');
+    const captureStatus = document.getElementById('captureStatus');
+    const adminForm = document.getElementById('adminForm');
+    const cameraOverlay = document.getElementById('cameraOverlay');
+    const scanningOverlay = document.getElementById('scanningOverlay');
+    const cancelBtn = document.getElementById('cancelBtn');
+    
+    // Variables
+    let stream = null;
+    let actionType = null;
+    let faceVerified = false;
+    let faceCheckInterval = null;
+    let faceDetectionAttempts = 0;
+    const maxFaceDetectionAttempts = 10; // Limit attempts to prevent endless checking
+    
+    // Helper functions
+    function startCamera() {
+      faceCapture.classList.add('show');
+      actionButtons.style.display = 'none';
+      captureStatus.textContent = 'Starting camera for verification...';
+      captureStatus.className = 'face-capture-status';
+      verifyBtn.classList.add('disabled');
+      verifyBtn.style.display = 'block'; // Make sure button is visible
+      faceVerified = false;
+      cameraOverlay.classList.remove('verified');
+      scanningOverlay.classList.add('active');
+      
+      navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          width: { ideal: 320 },
+          height: { ideal: 240 },
+          facingMode: "user"
+        } 
+      })
+      .then(mediaStream => {
+        stream = mediaStream;
+        video.srcObject = stream;
+        captureStatus.textContent = 'Camera active. Looking for face...';
+        
+        // Start automatic face detection
+        startFaceDetection();
+      })
+      .catch(err => {
+        console.error("Camera error:", err);
+        captureStatus.textContent = 'Camera access failed. Please allow camera access.';
+        captureStatus.className = 'face-capture-status error';
+        scanningOverlay.classList.remove('active');
+      });
+    }
+    
+    function startFaceDetection() {
+      // Reset face detection state
+      faceDetectionAttempts = 0;
+      
+      // Clear any existing interval
+      if (faceCheckInterval) {
+        clearInterval(faceCheckInterval);
+      }
+      
+      // Set interval to check for face
+      faceCheckInterval = setInterval(() => {
+        if (faceDetectionAttempts >= maxFaceDetectionAttempts) {
+          clearInterval(faceCheckInterval);
+          captureStatus.textContent = 'Face detection timeout. Please try again.';
+          captureStatus.className = 'face-capture-status error';
+          scanningOverlay.classList.remove('active');
+          return;
+        }
+        
+        // Attempt to detect face and verify
+        faceDetectionAttempts++;
+        captureStatus.textContent = `Looking for face... (attempt ${faceDetectionAttempts}/${maxFaceDetectionAttempts})`;
+        
+        // Simulate face detection (in a real implementation, this would use face recognition API)
+        const imageData = captureImage();
+        simulateFaceDetection(imageData);
+      }, 1000);
+    }
+    
+    function simulateFaceDetection(imageData) {
+      // In a real implementation, this would call a server API or use client-side ML
+      // For this demo, we'll simulate success after a few attempts
+      if (faceDetectionAttempts >= 3) { // Succeed after 3 attempts to simulate processing
+        faceVerified = true;
+        faceInput.value = imageData;
+        
+        // Update UI to show success
+        clearInterval(faceCheckInterval);
+        captureStatus.textContent = 'Face verified successfully! You can now complete the action.';
+        captureStatus.className = 'face-capture-status success';
+        verifyBtn.classList.remove('disabled');
+        verifyBtn.style.display = 'block'; // Ensure button is visible
+        cameraOverlay.classList.add('verified');
+        scanningOverlay.classList.remove('active');
+        
+        // Highlight the verification button to draw attention
+        verifyBtn.classList.add('pulse');
+      }
+    }
+    
+    function captureImage() {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      return canvas.toDataURL('image/jpeg');
+    }
+    
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      
+      if (faceCheckInterval) {
+        clearInterval(faceCheckInterval);
+      }
+    }
+    
+    function resetUI() {
+      faceCapture.classList.remove('show');
+      actionButtons.style.display = 'flex';
+      stopCamera();
+    }
+    
+    // Event Listeners
+    blockBtn.addEventListener('click', () => {
+      actionType = 'block';
+      selectedAction.value = 'block';
+      startCamera();
+    });
+    
+    deleteBtn.addEventListener('click', () => {
+      actionType = 'delete';
+      selectedAction.value = 'delete';
+      startCamera();
+    });
+    
+    verifyBtn.addEventListener('click', () => {
+      if (faceVerified) {
+        // Update status
+        captureStatus.textContent = 'Submitting request...';
+        
+        // Stop the camera
+        stopCamera();
+        
+        // Submit the form
+        adminForm.submit();
+      } else {
+        captureStatus.textContent = 'Face not verified yet. Please wait.';
+        captureStatus.className = 'face-capture-status error';
+        
+        // If verification is taking too long, offer a retry option
+        if (faceDetectionAttempts >= maxFaceDetectionAttempts) {
+          startFaceDetection(); // Restart the face detection process
+          captureStatus.textContent = 'Restarting face detection...';
+          captureStatus.className = 'face-capture-status';
+        }
+      }
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+      resetUI();
+    });
+    
+    // Handle page unload
+    window.addEventListener('beforeunload', () => {
+      stopCamera();
+    });
+  </script>
+</body>
+</html>

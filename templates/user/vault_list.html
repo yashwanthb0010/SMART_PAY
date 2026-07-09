@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>My Vaults</title>
+  <style>
+    :root {
+      --primary-blue: #1a73e8;
+      --secondary-blue: #4285f4;
+      --light-blue: #e8f0fe;
+      --white: #ffffff;
+      --text-dark: #202124;
+      --text-secondary: #5f6368;
+      --gray-light: #f8f9fa;
+      --gray-border: #dadce0;
+      --sidebar-width: 240px;
+      --shadow: 0 2px 10px rgba(0,0,0,0.08);
+      --card-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      --transition: all 0.2s ease;
+      --success: #34a853;
+      --danger: #ea4335;
+      --info: #4285f4;
+      --border-radius: 12px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Google Sans', 'Segoe UI', Arial, sans-serif; }
+    body { display:flex; min-height:100vh; background:var(--gray-light); }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--white);
+      color: var(--text-dark);
+      display: flex; 
+      flex-direction: column; 
+      box-shadow: var(--shadow);
+      z-index: 10;
+    }
+    .sidebar .logo {
+      font-size: 1.5rem; 
+      text-align: center; 
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--gray-border); 
+      font-weight: 600;
+      color: var(--primary-blue);
+    }
+    .sidebar nav { flex:1; padding:1rem 0; }
+    .sidebar nav a {
+      display: flex; 
+      align-items: center; 
+      padding: .85rem 1.5rem;
+      color: var(--text-dark); 
+      text-decoration: none; 
+      transition: var(--transition);
+      border-radius: 0 24px 24px 0;
+      margin: 2px 0;
+    }
+    .sidebar nav a .icon { 
+      margin-right: 1rem; 
+      font-size: 1.2rem; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+    }
+    .sidebar nav a:hover {
+      background: var(--light-blue);
+      color: var(--primary-blue);
+    }
+    .sidebar nav a.active {
+      background: var(--light-blue);
+      color: var(--primary-blue);
+      font-weight: 500;
+    }
+    .sidebar .logout { 
+      padding: 1rem 1.5rem; 
+      border-top: 1px solid var(--gray-border); 
+    }
+    .sidebar .logout a { 
+      color: var(--text-dark); 
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      padding: .5rem;
+      border-radius: 24px;
+    }
+    .sidebar .logout a .icon { 
+      margin-right: .75rem; 
+    }
+    .sidebar .logout a:hover { 
+      background: var(--light-blue);
+      color: var(--primary-blue);
+    }
+
+    /* Main */
+    .main-content {
+      flex: 1; 
+      padding: 1.5rem; 
+      transition: var(--transition);
+      background-color: #f5f5f7;
+    }
+    .header {
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding: 0.5rem;
+    }
+    .header h1 {
+      color: var(--text-dark); 
+      font-size: 1.6rem; 
+      font-weight: 500;
+    }
+    .action-btn {
+      background: var(--primary-blue); 
+      color: var(--white);
+      border: none; 
+      padding: .6rem 1.2rem; 
+      border-radius: 24px;
+      font-size: .95rem; 
+      font-weight: 500;
+      cursor: pointer; 
+      display: flex; 
+      align-items: center;
+      transition: var(--transition);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    .action-btn .icon { margin-right: .5rem; }
+    .action-btn:hover {
+      background: var(--secondary-blue);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* Forms */
+    #vaultFormContainer,
+    #withdrawFormContainer {
+      background: var(--white); 
+      padding: 1.5rem; 
+      margin-bottom: 1.5rem;
+      border-radius: var(--border-radius); 
+      box-shadow: var(--card-shadow);
+      max-width: 500px; 
+      transition: var(--transition);
+      display: none;
+    }
+    #vaultFormContainer.show,
+    #withdrawFormContainer.show {
+      display: block;
+    }
+    .form-group { margin-bottom: 1.25rem; }
+    label { 
+      display: block; 
+      margin-bottom: .5rem; 
+      font-weight: 500; 
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="password"],
+    input[type="tel"] {
+      width: 100%; 
+      padding: .85rem; 
+      border: 1px solid var(--gray-border); 
+      border-radius: 8px;
+      font-size: 1rem; 
+      transition: var(--transition);
+      background-color: var(--gray-light);
+    }
+    input:focus {
+      outline: none; 
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 2px rgba(66,133,244,0.2);
+      background-color: var(--white);
+    }
+    .btn-submit {
+      background: var(--primary-blue); 
+      color: var(--white);
+      border: none; 
+      padding: .75rem 1.5rem; 
+      border-radius: 24px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer; 
+      display: flex; 
+      align-items: center;
+      transition: var(--transition);
+      width: 100%;
+      justify-content: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    .btn-submit .icon { margin-right: .5rem; }
+    .btn-submit:hover {
+      background: var(--secondary-blue);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* Table as Cards */
+    .table-container {
+      background: transparent;
+      border-radius: var(--border-radius);
+      padding: 0;
+      box-shadow: none;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 12px;
+    }
+    thead { 
+      display: none; 
+    }
+    tbody tr {
+      background: var(--white);
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 12px;
+      transition: var(--transition);
+    }
+    tbody tr:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+    td {
+      padding: 1rem;
+      border: none;
+      position: relative;
+    }
+    td:first-child {
+      border-radius: var(--border-radius) 0 0 var(--border-radius);
+      font-weight: 500;
+      color: var(--text-dark);
+      display: flex;
+      flex-direction: column;
+    }
+    td:first-child::after {
+      content: "Purpose";
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-weight: normal;
+    }
+    td:nth-child(2)::after {
+      content: "Original Amount";
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    td:nth-child(3) {
+      font-weight: 500;
+      color: var(--primary-blue);
+    }
+    td:nth-child(3)::after {
+      content: "Remaining";
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-weight: normal;
+    }
+    td:nth-child(4)::after {
+      content: "Unlock Date";
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    td:last-child {
+      border-radius: 0 var(--border-radius) var(--border-radius) 0;
+      text-align: right;
+    }
+    
+    .withdraw-btn {
+      background: transparent;
+      color: var(--primary-blue);
+      border: 1px solid var(--primary-blue);
+      padding: .5rem 1rem;
+      border-radius: 18px;
+      font-size: .9rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      transition: var(--transition);
+    }
+    .withdraw-btn .icon {
+      margin-right: .35rem;
+    }
+    .withdraw-btn:hover {
+      background: var(--light-blue);
+      color: var(--primary-blue);
+    }
+    
+    /* Flash messages */
+    #page-flash { margin-bottom: 1.5rem; }
+    #page-flash .flash { 
+      padding: .85rem 1.2rem; 
+      border-radius: var(--border-radius); 
+      margin-bottom: .75rem;
+      position: relative;
+      padding-left: 2.5rem;
+    }
+    #page-flash .flash::before {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+    }
+    #page-flash .danger { 
+      background: #fdeded; 
+      color: var(--danger);
+      border-left: 4px solid var(--danger);
+    }
+    #page-flash .danger::before { 
+      content: "⚠️"; 
+    }
+    #page-flash .info { 
+      background: #e8f0fe; 
+      color: var(--info);
+      border-left: 4px solid var(--info);
+    }
+    #page-flash .info::before { 
+      content: "ℹ️"; 
+    }
+    #page-flash .success { 
+      background: #e6f4ea; 
+      color: var(--success);
+      border-left: 4px solid var(--success);
+    }
+    #page-flash .success::before { 
+      content: "✅"; 
+    }
+    
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      background: var(--white);
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+    }
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { width: 70px; }
+      .sidebar .logo { font-size: 1.2rem; padding: 1rem 0; }
+      .sidebar nav a span { display: none; }
+      .sidebar .logout a span { display: none; }
+      .main-content { padding: 1rem; }
+      .header h1 { font-size: 1.4rem; }
+      td { padding: 0.75rem; }
+    }
+    
+    /* Withdraw form title styling */
+    #withdrawFormContainer h2 {
+      margin-bottom: 1.25rem;
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--text-dark);
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Smart Pay</div>
+    <nav>
+      <a href="{{ url_for('user.dashboard') }}"><span class="icon">📊</span><span>Dashboard</span></a>
+      <a href="{{ url_for('user.transactions_view') }}"><span class="icon">📝</span><span>Transactions</span></a>
+      <a href="{{ url_for('user.send_money') }}"><span class="icon">📤</span><span>Send Money</span></a>
+      <a href="{{ url_for('user.list_vaults') }}" class="active"><span class="icon">🏦</span><span>My Vaults</span></a>
+      <a href="{{ url_for('user.donation_pool') }}"><span class="icon">🤝</span><span>Donations</span></a>
+       <a href="/user/profile/edit">
+      <div class="icon">👤</div>
+      <span>Edit Profile</span>
+    </a>
+    </nav>
+    <div class="logout">
+      <a href="/logout"><span class="icon">🚪</span><span>Logout</span></a>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- Flash messages -->
+    <div id="page-flash">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, msg in messages %}
+          <div class="flash {{ category }}">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+    </div>
+
+    <div class="header">
+      <h1>My Vaults</h1>
+      <button class="action-btn" id="newVaultBtn">
+        <span class="icon">＋</span>Create Vault
+      </button>
+    </div>
+
+    <!-- Create Vault Form -->
+    <div id="vaultFormContainer" class="{{ 'show' if action=='new' else '' }}">
+  <form method="POST" action="{{ url_for('user.list_vaults') }}">
+    <!-- always send these -->
+    <input type="hidden" name="action"      value="new"/>
+    <input type="hidden" name="stage"       value="{{ stage }}"/>
+
+    {% if stage=='password_ok' %}
+      <!-- carry forward the data you collected in step 1 -->
+      <input type="hidden" name="purpose"     value="{{ purpose }}"/>
+      <input type="hidden" name="amount"      value="{{ amount }}"/>
+      <input type="hidden" name="unlock_date" value="{{ unlock_date }}"/>
+
+      <div class="form-group">
+        <label for="otp_new">Enter OTP</label>
+        <input id="otp_new" name="otp" type="text" maxlength="6" required/>
+      </div>
+    {% else %}
+      <!-- initial entry of purpose, amount & password -->
+      <div class="form-group">
+        <label for="purpose">Purpose</label>
+        <input id="purpose" name="purpose" type="text"
+               value="{{ request.form.purpose or '' }}" required/>
+      </div>
+      <div class="form-group">
+        <label for="amount">Amount (₹)</label>
+        <input id="amount" name="amount" type="number" min="1" step="0.01"
+               value="{{ request.form.amount or '' }}" required/>
+      </div>
+      <div class="form-group">
+        <label for="unlock_date">Unlock Date</label>
+        <input id="unlock_date" name="unlock_date" type="date"
+               value="{{ request.form.unlock_date or '' }}" required/>
+      </div>
+      <div class="form-group">
+        <label for="auth_password_new">Your Password</label>
+        <input id="auth_password_new" name="auth_password" type="password" required/>
+      </div>
+    {% endif %}
+
+    <button type="submit" class="btn-submit">
+      <span class="icon">✔️</span>
+      {{ 'Confirm OTP' if stage=='password_ok' else 'Save Vault' }}
+    </button>
+  </form>
+</div>
+
+
+    <!-- Withdraw Form -->
+<div id="withdrawFormContainer"
+     class="{{ 'show' if action=='withdraw' else '' }}">
+  <h2>Withdraw from “{{ purpose }}”</h2>
+
+  <form method="POST" action="{{ url_for('user.list_vaults') }}">
+    <input type="hidden" name="action"   value="withdraw"/>
+    <input type="hidden" name="stage"    value="{{ stage }}"/>
+    <input type="hidden" name="vault_id" value="{{ vault_id }}"/>
+
+    {% if stage == 'password_ok' %}
+      <!-- **** carry the amount forward **** -->
+      <input type="hidden" name="amount" value="{{ amount }}"/>
+
+      <div class="form-group">
+        <label for="otp_w">Enter OTP</label>
+        <input id="otp_w" name="otp" type="text" maxlength="6" required/>
+      </div>
+    {% else %}
+      <div class="form-group">
+        <label for="wfAmount">Amount to Withdraw (₹)</label>
+        <input id="wfAmount" name="amount" type="number"
+               step="0.01" min="1" required/>
+      </div>
+      <div class="form-group">
+        <label for="auth_password_w">Your Password</label>
+        <input id="auth_password_w" name="auth_password"
+               type="password" required/>
+      </div>
+    {% endif %}
+
+    <button type="submit" class="btn-submit">
+      <span class="icon">💸</span>
+      {{ 'Confirm OTP' if stage=='password_ok' else 'Withdraw' }}
+    </button>
+  </form>
+</div>
+
+
+    <!-- Vaults Table -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Purpose</th>
+            <th>Original ₹</th>
+            <th>Remaining ₹</th>
+            <th>Unlock Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vaults %}
+          <tr>
+            <td>{{ v.purpose }}</td>
+            <td>₹{{ "%.2f"|format(v.original_amount) }}</td>
+            <td>₹{{ "%.2f"|format(v.current_amount) }}</td>
+            <td>{{ v.unlock_date.strftime("%Y-%m-%d") }}</td>
+            <td>
+              <button class="withdraw-btn"
+                      data-vault-id="{{ v.vault_id }}"
+                      data-purpose="{{ v.purpose }}">
+                <span class="icon">💸</span>Withdraw
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <div class="empty-state-icon">🏦</div>
+                <p>You have no vaults yet.</p>
+                <p>Create a vault to start saving for your goals!</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // show/hide Create Vault
+    document.getElementById('newVaultBtn').onclick = () => {
+      const c = document.getElementById('vaultFormContainer');
+      c.classList.toggle('show');
+    };
+
+    // show/hide Withdraw Form
+    document.querySelectorAll('.withdraw-btn').forEach(btn => {
+      btn.onclick = () => {
+        const vid     = btn.dataset.vaultId;
+        const purpose = btn.dataset.purpose;
+        document.querySelector('input[name="vault_id"]').value = vid;
+        document.querySelector('#withdrawFormContainer h2')
+                .textContent = `Withdraw from "${purpose}"`;
+        document.getElementById('withdrawFormContainer').classList.add('show');
+        window.scrollTo({ top: 0, behavior:'smooth' });
+      };
+    });
+
+    // keep nav highlight
+    document.querySelectorAll('.sidebar nav a')
+      .forEach(a => { if(a.href === window.location.href) a.classList.add('active'); });
+  </script>
+</body>
+</html>
