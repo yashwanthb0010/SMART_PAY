@@ -1,17 +1,16 @@
-# admin.py
-
 import logging
 from flask import (
     Blueprint, render_template, session,
     redirect, url_for, request, flash, current_app
 )
 from pymongo import MongoClient
+from werkzeug.security import check_password_hash
 try:
-    from face_utils import FaceUtils
-    FACE_RECOGNITION_AVAILABLE = True
-except ImportError:
+    from face_utils import FaceUtils, FACE_RECOGNITION_AVAILABLE
+except Exception:
     FACE_RECOGNITION_AVAILABLE = False
     FaceUtils = None
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin", __name__)
@@ -27,12 +26,36 @@ def require_admin():
     return user and user.get("role") == "admin"
 
 def verify_admin_face(face_data):
+    """Verify admin face — auto-registers on first use if not yet registered."""
     if not face_data:
         return False, "No face data provided"
+    if not FACE_RECOGNITION_AVAILABLE or FaceUtils is None:
+        return False, "Face recognition unavailable."
     fu = FaceUtils()
     admin_email = session["user"]["email"]
+    admin_doc = users.find_one({"email": admin_email})
+    if admin_doc and not admin_doc.get("face_registered", False):
+        # First time: auto-register the face for this admin
+        ok, msg = fu.register_face(admin_email, face_data)
+        return ok, msg
+    # Already registered: verify against their own specific stored model
     ok, msg, _ = fu.verify_face(admin_email, face_data)
     return ok, msg
+
+def verify_admin_password(password):
+    """Fallback: verify admin by their account password."""
+    admin_email = session["user"]["email"]
+    admin_doc = users.find_one({"email": admin_email})
+    if not admin_doc:
+        return False
+    return check_password_hash(admin_doc["password"], password)
+
+def is_admin_face_registered():
+    admin_email = session.get("user", {}).get("email")
+    if not admin_email:
+        return False
+    admin_doc = users.find_one({"email": admin_email})
+    return bool(admin_doc and admin_doc.get("face_registered", False))
 
 @admin_bp.route("/dashboard")
 def dashboard():
@@ -56,14 +79,21 @@ def user_details(acc_no):
     if request.method == "POST":
         action = request.form.get("action")
         face_data = request.form.get("face_data", "")
+        auth_pw = request.form.get("auth_password", "")
 
         # Log incoming form data for debugging
         logger.info(f"ADMIN ACTION: {action=} for acc_no={acc_no}, face_data length={len(face_data)}")
 
-        ok, msg = verify_admin_face(face_data)
-        if not ok:
-            flash("Face verification failed: " + msg)
-            return redirect(url_for("admin.user_details", acc_no=acc_no))
+        # Always use face when available; auto-registers on first use
+        if FACE_RECOGNITION_AVAILABLE and FaceUtils is not None:
+            ok, msg = verify_admin_face(face_data)
+            if not ok:
+                flash("Face verification failed: " + msg)
+                return redirect(url_for("admin.user_details", acc_no=acc_no))
+        else:
+            if not verify_admin_password(auth_pw):
+                flash("Incorrect admin password.")
+                return redirect(url_for("admin.user_details", acc_no=acc_no))
 
         if action == "block":
             new_status = not bool(user_doc.get("is_blocked", False))
@@ -88,7 +118,9 @@ def user_details(acc_no):
     return render_template(
         "admin/user_details.html",
         user=user_doc,
-        transactions=txns
+        transactions=txns,
+        face_recognition_available=FACE_RECOGNITION_AVAILABLE,
+        admin_face_registered=is_admin_face_registered()
     )
 from bson.objectid import ObjectId
 from datetime import datetime
@@ -106,16 +138,26 @@ def deposit_user(acc_no):
         return redirect(url_for("admin.dashboard"))
 
     if request.method == "POST":
-        amount   = float(request.form["amount"])
-        face_data = request.form.get("face_data", "")
-
-        ok, msg = verify_admin_face(face_data)
-        if not ok:
-            flash("Face verification failed: " + msg, "danger")
+        amount    = float(request.form["amount"])
+        if amount <= 0:
+            flash("Amount must be greater than zero.", "danger")
             return redirect(url_for("admin.deposit_user", acc_no=acc_no))
+        face_data = request.form.get("face_data", "")
+        auth_pw   = request.form.get("auth_password", "")
+
+        # Always use face when available; auto-registers on first use
+        if FACE_RECOGNITION_AVAILABLE and FaceUtils is not None:
+            ok, msg = verify_admin_face(face_data)
+            if not ok:
+                flash("Face verification failed: " + msg, "danger")
+                return redirect(url_for("admin.deposit_user", acc_no=acc_no))
+        else:
+            if not verify_admin_password(auth_pw):
+                flash("Incorrect admin password.", "danger")
+                return redirect(url_for("admin.deposit_user", acc_no=acc_no))
 
         # update balance
-        new_bal = user_doc.get("balance", 0) + amount
+        new_bal = round(user_doc.get("balance", 0) + amount, 2)
         users.update_one(
             {"acc_no": acc_no},
             {"$set": {"balance": new_bal}}
@@ -127,7 +169,6 @@ def deposit_user(acc_no):
             "acc_no":            acc_no,
             "type":              "deposit",
             "amount":            amount,
-            "face_distance":     msg,
             "resulting_balance": new_bal,
             "timestamp":         datetime.utcnow(),
             "performed_by":      session["user"]["email"]
@@ -141,7 +182,9 @@ def deposit_user(acc_no):
         flash(f"₹{amount:.2f} deposited to {user_doc['name']} successfully.", "success")
         return redirect(url_for("admin.user_details", acc_no=acc_no))
 
-    return render_template("admin/deposit.html", user=user_doc)
+    return render_template("admin/deposit.html", user=user_doc,
+                           face_recognition_available=FACE_RECOGNITION_AVAILABLE,
+                           admin_face_registered=is_admin_face_registered())
 
 
 @admin_bp.route("/user_details/<acc_no>/withdraw", methods=["GET", "POST"])
@@ -155,20 +198,30 @@ def withdraw_user(acc_no):
         return redirect(url_for("admin.dashboard"))
 
     if request.method == "POST":
-        amount   = float(request.form["amount"])
-        face_data = request.form.get("face_data", "")
-
-        ok, msg = verify_admin_face(face_data)
-        if not ok:
-            flash("Face verification failed: " + msg, "danger")
+        amount    = float(request.form["amount"])
+        if amount <= 0:
+            flash("Amount must be greater than zero.", "danger")
             return redirect(url_for("admin.withdraw_user", acc_no=acc_no))
+        face_data = request.form.get("face_data", "")
+        auth_pw   = request.form.get("auth_password", "")
+
+        # Always use face when available; auto-registers on first use
+        if FACE_RECOGNITION_AVAILABLE and FaceUtils is not None:
+            ok, msg = verify_admin_face(face_data)
+            if not ok:
+                flash("Face verification failed: " + msg, "danger")
+                return redirect(url_for("admin.withdraw_user", acc_no=acc_no))
+        else:
+            if not verify_admin_password(auth_pw):
+                flash("Incorrect admin password.", "danger")
+                return redirect(url_for("admin.withdraw_user", acc_no=acc_no))
 
         if user_doc.get("balance", 0) < amount:
-            flash("Insufficient balance.", "danger")
+            flash(f"Insufficient balance. User's balance is ₹{user_doc.get('balance', 0):.2f}.", "danger")
             return redirect(url_for("admin.withdraw_user", acc_no=acc_no))
 
         # update balance
-        new_bal = user_doc["balance"] - amount
+        new_bal = round(user_doc["balance"] - amount, 2)
         users.update_one(
             {"acc_no": acc_no},
             {"$set": {"balance": new_bal}}
@@ -180,7 +233,6 @@ def withdraw_user(acc_no):
             "acc_no":            acc_no,
             "type":              "withdraw",
             "amount":            amount,
-            "face_distance":     msg,
             "resulting_balance": new_bal,
             "timestamp":         datetime.utcnow(),
             "performed_by":      session["user"]["email"]
@@ -194,4 +246,6 @@ def withdraw_user(acc_no):
         flash(f"₹{amount:.2f} withdrawn from {user_doc['name']} successfully.", "success")
         return redirect(url_for("admin.user_details", acc_no=acc_no))
 
-    return render_template("admin/withdraw.html", user=user_doc)
+    return render_template("admin/withdraw.html", user=user_doc,
+                           face_recognition_available=FACE_RECOGNITION_AVAILABLE,
+                           admin_face_registered=is_admin_face_registered())

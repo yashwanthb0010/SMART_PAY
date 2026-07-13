@@ -417,9 +417,27 @@
     </div>
   </div>
   <div class="main-content">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div style="padding:0.85rem 1rem; border-radius:8px; margin-bottom:12px; font-weight:500; display:flex; align-items:center; gap:0.5rem;
+            {% if category=='danger' %}background:#ffebee;color:#c62828;border-left:4px solid #f44336;
+            {% elif category=='warning' %}background:#fff8e1;color:#e65100;border-left:4px solid #ffa000;
+            {% elif category=='success' %}background:#e8f5e9;color:#2e7d32;border-left:4px solid #4caf50;
+            {% else %}background:#e3f2fd;color:#0d47a1;border-left:4px solid #1976d2;{% endif %}">
+            {% if category=='danger' %}❌{% elif category=='warning' %}⚠️{% elif category=='success' %}✅{% else %}ℹ️{% endif %}
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
     <!-- Welcome Card -->
     <div class="welcome-card">
       <h1>Send Money</h1>
+      {% if user %}
+      <div style="font-size:0.9rem;color:var(--text-muted);margin-top:4px;">Your balance: <strong style="color:var(--primary-blue)">₹{{ "%.2f"|format(user.balance) }}</strong></div>
+      {% endif %}
     </div>
     <!-- Send Money Form Section -->
     <div class="form-section">
@@ -455,18 +473,40 @@
               name="amount"
               type="number"
               step="0.01"
-              min="0"
+              min="0.01"
               class="form-control"
               placeholder="Enter amount"
               required
             />
           </div>
+
+          {% if face_recognition_available %}
+          <!-- Face verification mode -->
           <input type="hidden" name="face_data" id="face_data"/>
           <div class="form-submit">
             <button type="button" id="sendButton" class="btn btn-primary">
               Send Money
             </button>
           </div>
+          {% else %}
+          <!-- Password fallback mode -->
+          <div class="form-group">
+            <label for="auth_password">🔒 Enter Your Password to Confirm</label>
+            <input
+              id="auth_password"
+              name="auth_password"
+              type="password"
+              class="form-control"
+              placeholder="Your account password"
+              required
+            />
+          </div>
+          <div class="form-submit">
+            <button type="submit" class="btn btn-primary">
+              ₹ Send Money
+            </button>
+          </div>
+          {% endif %}
         </form>
         <a class="back-link" href="/user/dashboard">Back to Dashboard</a>
       </div>
@@ -499,12 +539,26 @@
   <div class="modal-overlay" id="faceVerificationModal">
     <div class="modal-content">
       <h3>Face Verification</h3>
-      <p>Please look at the camera for verification</p>
-      <video id="video" width="320" height="240" autoplay></video>
-      <div class="status" id="detectionStatus">Detecting face...</div>
-      <button class="confirm-btn" id="confirmButton" style="display:none;">
-        Confirm Send
-      </button>
+      <p>Look at the camera, then click <strong>Capture &amp; Verify</strong></p>
+      <video id="video" width="320" height="240" autoplay playsinline></video>
+      <div class="status" id="detectionStatus">Camera starting...</div>
+      <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;margin-top:0.5rem;">
+        <button class="confirm-btn" id="captureButton" style="display:none;background:#34a853;">
+          📷 Capture &amp; Verify
+        </button>
+        <button class="confirm-btn" id="confirmButton" style="display:none;">
+          ✅ Confirm Send
+        </button>
+        <button class="confirm-btn" id="retakeFaceBtn" style="display:none;background:#6c757d;">
+          🔄 Retake
+        </button>
+        <button class="confirm-btn" id="cancelFaceBtn" style="background:#ea4335;">
+          ✕ Cancel
+        </button>
+      </div>
+      <div id="facePreviewContainer" style="display:none;margin-top:0.5rem;">
+        <img id="facePreviewImg" style="max-width:200px;border-radius:8px;border:2px solid #34a853;" alt="Captured face"/>
+      </div>
     </div>
   </div>
   <!-- QR Scan Modal -->
@@ -535,12 +589,20 @@
     const faceModal     = document.getElementById('faceVerificationModal');
     const video         = document.getElementById('video');
     const detectionStatus = document.getElementById('detectionStatus');
+    const captureButton = document.getElementById('captureButton');
     const confirmBtn    = document.getElementById('confirmButton');
+    const retakeFaceBtn = document.getElementById('retakeFaceBtn');
+    const cancelFaceBtn = document.getElementById('cancelFaceBtn');
     const faceInput     = document.getElementById('face_data');
     const sendForm      = document.getElementById('sendMoneyForm');
-    let qrStream, qrCtx, qrScanInterval;
-    let faceStream, faceInterval, faceDetected = false;
-    // 1) QR Scan via Webcam
+    const facePreviewContainer = document.getElementById('facePreviewContainer');
+    const facePreviewImg       = document.getElementById('facePreviewImg');
+
+    let qrStream = null;
+    let qrCtx, qrScanInterval;
+    let faceStream = null;
+
+    // ── 1) QR Scan via Webcam ────────────────────────────────────────────
     scanQrBtn.addEventListener('click', async () => {
       qrModal.style.display = 'flex';
       qrStatus.textContent = 'Looking for QR code…';
@@ -558,7 +620,7 @@
             if (code) {
               try {
                 const data = JSON.parse(code.data);
-                recipUpi.value = data.upi_id;
+                recipUpi.value = data.upi_id || code.data;
               } catch {
                 recipUpi.value = code.data;
               }
@@ -570,20 +632,27 @@
         qrStatus.textContent = 'Camera error: ' + err.message;
       }
     });
+
     qrCloseBtn.addEventListener('click', closeQrModal);
+
     function closeQrModal() {
       qrModal.style.display = 'none';
       clearInterval(qrScanInterval);
-      qrStream.getTracks().forEach(track => track.stop());
+      // Guard: only stop tracks if stream was actually started
+      if (qrStream) {
+        qrStream.getTracks().forEach(track => track.stop());
+        qrStream = null;
+      }
     }
-    // 2) QR Scan via File Upload
+
+    // ── 2) QR Scan via File Upload ───────────────────────────────────────
     uploadQrInput.addEventListener('change', e => {
       const file = e.target.files[0];
       if (!file) return;
       const img = new Image();
       img.onload = () => {
-        qrCanvas.width = img.width;
-        qrCanvas.height= img.height;
+        qrCanvas.width  = img.width;
+        qrCanvas.height = img.height;
         qrCtx = qrCanvas.getContext('2d');
         qrCtx.drawImage(img, 0, 0);
         const imgData = qrCtx.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
@@ -591,59 +660,106 @@
         if (code) {
           try {
             const data = JSON.parse(code.data);
-            recipUpi.value = data.upi_id;
+            recipUpi.value = data.upi_id || code.data;
           } catch {
             recipUpi.value = code.data;
           }
         } else {
-          alert('No QR code found.');
+          alert('No QR code found in the image.');
         }
       };
       img.src = URL.createObjectURL(file);
     });
-    // 3) Face Verification Flow
-    sendButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      // Basic form validation
-      if (!recipUpi.value || !document.getElementById('amount').value) {
-        alert('Please fill in all required fields.');
-        return;
-      }
-      faceModal.style.display = 'flex';
-      startFaceCamera();
-    });
+
+    // ── 3) Face Verification Flow ────────────────────────────────────────
+    if (sendButton) {
+      sendButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!recipUpi.value.trim() || !document.getElementById('amount').value) {
+          alert('Please fill in all required fields.');
+          return;
+        }
+        // Reset state
+        faceInput.value = '';
+        detectionStatus.textContent = 'Camera starting…';
+        detectionStatus.style.color = '';
+        captureButton.style.display = 'none';
+        confirmBtn.style.display = 'none';
+        retakeFaceBtn.style.display = 'none';
+        facePreviewContainer.style.display = 'none';
+
+        faceModal.style.display = 'flex';
+        startFaceCamera();
+      });
+    }
+
     function startFaceCamera() {
-      navigator.mediaDevices.getUserMedia({ video: true })
+      navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } })
         .then(stream => {
           faceStream = stream;
           video.srcObject = stream;
-          faceInterval = setInterval(simulateFaceDetection, 2000);
+          detectionStatus.textContent = 'Camera ready — look directly at the camera.';
+          captureButton.style.display = 'inline-block';
         })
         .catch(err => {
-          detectionStatus.textContent = 'Camera error: ' + err.message;
+          detectionStatus.textContent = '⚠️ Camera error: ' + err.message;
+          detectionStatus.style.color = 'var(--error-red)';
         });
     }
-    function simulateFaceDetection() {
-      if (faceDetected) return;
-      // Simulate a 2-second detection delay
-      faceDetected = true;
-      clearInterval(faceInterval);
+
+    // Capture button — take the photo
+    captureButton.addEventListener('click', () => {
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height= video.videoHeight;
+      const width = video.videoWidth || 320;
+      const height = video.videoHeight || 240;
+      canvas.width  = width;
+      canvas.height = height;
       canvas.getContext('2d').drawImage(video, 0, 0);
-      faceInput.value = canvas.toDataURL('image/jpeg');
-      detectionStatus.textContent = 'Face detected! Confirm to proceed.';
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      faceInput.value = dataUrl;
+
+      // Show preview
+      facePreviewImg.src = dataUrl;
+      facePreviewContainer.style.display = 'block';
+
+      detectionStatus.textContent = 'Photo captured! Confirm to send money.';
       detectionStatus.style.color = 'var(--success-green)';
-      confirmBtn.style.display = 'inline-block';
-    }
-    confirmBtn.addEventListener('click', () => {
-      // Stop and hide face modal
-      faceStream.getTracks().forEach(t => t.stop());
+      captureButton.style.display = 'none';
+      confirmBtn.style.display   = 'inline-block';
+      retakeFaceBtn.style.display = 'inline-block';
+    });
+
+    // Retake — restart camera
+    retakeFaceBtn.addEventListener('click', () => {
+      faceInput.value = '';
+      facePreviewContainer.style.display = 'none';
+      confirmBtn.style.display   = 'none';
+      retakeFaceBtn.style.display = 'none';
+      detectionStatus.textContent = 'Camera restarting…';
+      detectionStatus.style.color = '';
+      if (!faceStream || !faceStream.active) startFaceCamera();
+      else captureButton.style.display = 'inline-block';
+    });
+
+    // Cancel — close modal
+    cancelFaceBtn.addEventListener('click', () => {
+      stopFaceCamera();
       faceModal.style.display = 'none';
-      // Submit final form
+    });
+
+    // Confirm — submit form
+    confirmBtn.addEventListener('click', () => {
+      stopFaceCamera();
+      faceModal.style.display = 'none';
       sendForm.submit();
     });
+
+    function stopFaceCamera() {
+      if (faceStream) {
+        faceStream.getTracks().forEach(t => t.stop());
+        faceStream = null;
+      }
+    }
   </script>
 </body>
 </html>

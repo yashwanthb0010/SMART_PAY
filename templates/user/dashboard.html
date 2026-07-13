@@ -134,6 +134,55 @@
       font-size: 0.9rem;
     }
 
+    /* Balance Card */
+    .balance-card {
+      background: linear-gradient(135deg, var(--primary-blue) 0%, #0d47a1 100%);
+      color: var(--white);
+      padding: 28px 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(26,115,232,0.4);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .balance-card .balance-label {
+      font-size: 0.95rem;
+      opacity: 0.85;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    .balance-card .balance-amount {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+    .balance-card .balance-icon {
+      font-size: 3rem;
+      opacity: 0.3;
+    }
+    .balance-card .acc-no {
+      font-size: 0.85rem;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    /* Flash messages */
+    .flash-msg {
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-weight: 500;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .flash-danger  { background: #ffebee; color: #c62828; border-left: 4px solid #f44336; }
+    .flash-warning { background: #fff8e1; color: #e65100; border-left: 4px solid #ffa000; }
+    .flash-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
+    .flash-info    { background: #e3f2fd; color: #0d47a1; border-left: 4px solid #1976d2; }
+
     /* Quick Actions */
     .quick-actions {
       display: grid;
@@ -421,16 +470,25 @@
   </div>
 
   <div class="main-content">
-    <!-- Error Message Container -->
-    <div class="error-container" id="errorContainer">
-      <button class="error-close" id="closeError">×</button>
-      <div class="error-title">
-        <span class="icon">⚠️</span>
-        <span id="errorTitle">Error</span>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-msg flash-{{ category if category in ['danger','warning','success','info'] else 'danger' }}">
+            {% if category == 'danger' %}❌{% elif category == 'warning' %}⚠️{% elif category == 'success' %}✅{% else %}ℹ️{% endif %}
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Balance Card -->
+    <div class="balance-card">
+      <div>
+        <div class="balance-label">Available Balance</div>
+        <div class="balance-amount">₹{{ "%.2f"|format(user.balance) }}</div>
+        <div class="acc-no">A/c {{ user.acc_no }}</div>
       </div>
-      <div class="error-message" id="errorMessage">
-        <!-- Error messages will appear here -->
-      </div>
+      <div class="balance-icon">💳</div>
     </div>
 
     <!-- Welcome Card -->

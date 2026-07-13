@@ -6,9 +6,8 @@ from flask import (
 )
 from pymongo import MongoClient
 try:
-    from face_utils import FaceUtils
-    FACE_RECOGNITION_AVAILABLE = True
-except ImportError:
+    from face_utils import FaceUtils, FACE_RECOGNITION_AVAILABLE
+except Exception:
     FACE_RECOGNITION_AVAILABLE = False
     FaceUtils = None
 from datetime import datetime
@@ -130,12 +129,15 @@ def edit_profile():
 
         # Handle new face capture
         if face_data:
-            fu = FaceUtils()
-            ok, msg = fu.register_face(u["email"], face_data)
-            if not ok:
-                flash("Face update failed: " + msg)
-                return redirect(url_for("user.edit_profile"))
-            # FaceUtils has set face_encoding and face_registered
+            if not FACE_RECOGNITION_AVAILABLE or FaceUtils is None:
+                flash("Face recognition unavailable. Install: pip install opencv-contrib-python", "warning")
+            else:
+                fu = FaceUtils()
+                ok, msg = fu.register_face(u["email"], face_data)
+                if not ok:
+                    flash("Face update failed: " + msg, "danger")
+                    return redirect(url_for("user.edit_profile"))
+                flash("Face updated successfully.", "success")
 
         if updates:
             updates["updated_at"] = datetime.utcnow()
@@ -215,8 +217,17 @@ def send_money():
     if request.method == "POST":
         # 1) Read UPI ID instead of account number
         recipient_upi = request.form["recipient_upi"].strip().lower()
-        amount        = float(request.form["amount"])
-        face_b64      = request.form["face_data"]
+        try:
+            amount = float(request.form["amount"])
+        except (ValueError, KeyError):
+            flash("Invalid amount.", "danger")
+            return redirect(url_for("user.send_money"))
+        if amount <= 0:
+            flash("Amount must be greater than zero.", "danger")
+            return redirect(url_for("user.send_money"))
+
+        # Reload fresh sender data
+        sender = users.find_one({"email": session["user"]["email"]})
 
         # 2) Lookup recipient by UPI
         recipient = users.find_one({
@@ -226,22 +237,47 @@ def send_money():
         if not recipient:
             flash(f"Recipient UPI ID '{recipient_upi}' not found.", "danger")
             return redirect(url_for("user.send_money"))
-
-        # 3) Face verification
-        fu = FaceUtils()
-        ok, msg, dist = fu.verify_face(sender["email"], face_b64)
-        if not ok:
-            flash("Face verification failed: " + msg, "danger")
+        if recipient["_id"] == sender["_id"]:
+            flash("You cannot send money to yourself.", "danger")
             return redirect(url_for("user.send_money"))
+
+        # 3) Verify identity — always use face if recognition is available
+        if FACE_RECOGNITION_AVAILABLE and FaceUtils is not None:
+            face_b64 = request.form.get("face_data", "")
+            if not face_b64:
+                flash("Please capture your face for verification.", "danger")
+                return redirect(url_for("user.send_money"))
+            fu = FaceUtils()
+            if not sender.get("face_registered", False):
+                # First time: auto-register the face, then proceed
+                ok, msg = fu.register_face(sender["email"], face_b64)
+                if not ok:
+                    flash("Face verification failed: " + msg, "danger")
+                    return redirect(url_for("user.send_money"))
+                flash("Face registered and transaction approved!", "success")
+                dist = None
+            else:
+                # Already registered: verify against their specific stored model
+                ok, msg, dist = fu.verify_face(sender["email"], face_b64)
+                if not ok:
+                    flash("Face verification failed: " + msg, "danger")
+                    return redirect(url_for("user.send_money"))
+        else:
+            # Password fallback (only when face recognition library not installed)
+            auth_pw = request.form.get("auth_password", "")
+            if not check_password_hash(sender["password"], auth_pw):
+                flash("Incorrect password. Please try again.", "danger")
+                return redirect(url_for("user.send_money"))
+            dist = None
 
         # 4) Check sender balance
         if sender["balance"] < amount:
-            flash("Insufficient balance.", "danger")
+            flash(f"Insufficient balance. Your balance is ₹{sender['balance']:.2f}.", "danger")
             return redirect(url_for("user.send_money"))
 
         # 5) Compute new balances
-        new_sender_bal    = sender["balance"] - amount
-        new_recipient_bal = recipient["balance"] + amount
+        new_sender_bal    = round(sender["balance"] - amount, 2)
+        new_recipient_bal = round(recipient["balance"] + amount, 2)
 
         # 6) Update balances in DB
         users.update_one(
@@ -294,8 +330,10 @@ def send_money():
         flash(f"₹{amount:.2f} sent to {recipient_upi} successfully.", "success")
         return redirect(url_for("user.transactions_view"))
 
-    # GET request
-    return render_template("user/send_money.html")
+    # GET request – pass face_recognition flag to template
+    return render_template("user/send_money.html",
+                           face_recognition_available=FACE_RECOGNITION_AVAILABLE,
+                           user=users.find_one({"email": session["user"]["email"]}))
 from bson.objectid import ObjectId
 
 # New collections
@@ -431,11 +469,20 @@ def list_vaults():
         # OTP is good → perform the requested action
         now = datetime.utcnow()
         if action == "new":
+            # Validate sufficient balance
+            vault_amount = float(qs_amount)
+            if vault_amount <= 0:
+                flash("Vault amount must be greater than zero.", "danger")
+                return redirect(url_for("user.list_vaults"))
+            if u["balance"] < vault_amount:
+                flash(f"Insufficient balance to create vault. Your balance is ₹{u['balance']:.2f}.", "danger")
+                return redirect(url_for("user.list_vaults"))
+
             vault = {
                 "user_id":         u["user_id"],
                 "purpose":         qs_purpose,
-                "original_amount": float(qs_amount),
-                "current_amount":  float(qs_amount),
+                "original_amount": vault_amount,
+                "current_amount":  vault_amount,
                 "unlock_date":     datetime.fromisoformat(qs_unlock),
                 "created_at":      now,
                 "updated_at":      now
@@ -445,12 +492,34 @@ def list_vaults():
                 {"_id": res.inserted_id},
                 {"$set": {"vault_id": str(res.inserted_id)}}
             )
-            flash("Vault created successfully!", "success")
+            # Deduct from user balance
+            new_bal = round(u["balance"] - vault_amount, 2)
+            users.update_one({"_id": u["_id"]}, {"$set": {"balance": new_bal}})
+            # Record transaction
+            transactions.insert_one({
+                "user_id":           u["user_id"],
+                "type":              "vault_deposit",
+                "vault_id":          str(res.inserted_id),
+                "purpose":           qs_purpose,
+                "amount":            vault_amount,
+                "resulting_balance": new_bal,
+                "timestamp":         now
+            })
+            flash("Vault created successfully! ₹{:.2f} has been moved to your vault.".format(vault_amount), "success")
 
         elif action == "withdraw":
             oid   = ObjectId(vault_id)
             vdoc  = vaults.find_one({"_id": oid})
+            if not vdoc:
+                flash("Vault not found.", "danger")
+                return redirect(url_for("user.list_vaults"))
             amt   = float(qs_amount)
+            if amt <= 0:
+                flash("Withdrawal amount must be greater than zero.", "danger")
+                return redirect(url_for("user.list_vaults"))
+            if amt > vdoc["current_amount"]:
+                flash(f"Withdrawal amount ₹{amt:.2f} exceeds vault balance ₹{vdoc['current_amount']:.2f}.", "danger")
+                return redirect(url_for("user.list_vaults"))
             penalty = 0
             if now < vdoc["unlock_date"]:
                 penalty = round(amt * 0.02, 2)
@@ -461,15 +530,15 @@ def list_vaults():
                     "vault_id":  vault_id,
                     "timestamp": now
                 })
-            net = amt - penalty
+            net = round(amt - penalty, 2)
             vaults.update_one(
                 {"_id": oid},
                 {"$set": {
-                    "current_amount": vdoc["current_amount"] - amt,
+                    "current_amount": round(vdoc["current_amount"] - amt, 2),
                     "updated_at":     now
                 }}
             )
-            newbal = u["balance"] + net
+            newbal = round(u["balance"] + net, 2)
             users.update_one(
                 {"_id": u["_id"]},
                 {"$set": {"balance": newbal}}
@@ -483,7 +552,7 @@ def list_vaults():
                 "resulting_balance": newbal,
                 "timestamp":         now
             })
-            flash(f"Withdrew ₹{net:.2f} (penalty ₹{penalty:.2f})", "success")
+            flash(f"Withdrew ₹{net:.2f} from vault (early-exit penalty ₹{penalty:.2f}).", "success")
 
         # return to clean GET
         return redirect(url_for("user.list_vaults"))
@@ -517,16 +586,37 @@ def donation_pool():
             flash("Please enter a valid donation amount not exceeding your balance.", "danger")
             return redirect(url_for("user.donation_pool"))
 
-        # face‐verify
-        face_b64 = request.form.get("face_data", "")
-        fu = FaceUtils()
-        ok, msg, _ = fu.verify_face(u["email"], face_b64)
-        if not ok:
-            flash("Face verification failed: " + msg, "danger")
-            return redirect(url_for("user.donation_pool"))
+        # Verify identity — always use face if recognition is available
+        if FACE_RECOGNITION_AVAILABLE and FaceUtils is not None:
+            face_b64 = request.form.get("face_data", "")
+            if not face_b64:
+                flash("Please capture your face for verification.", "danger")
+                return redirect(url_for("user.donation_pool"))
+            fu = FaceUtils()
+            if not u.get("face_registered", False):
+                # First time: auto-register the face, then proceed
+                ok, msg = fu.register_face(u["email"], face_b64)
+                if not ok:
+                    flash("Face verification failed: " + msg, "danger")
+                    return redirect(url_for("user.donation_pool"))
+                flash("Face registered and donation approved!", "success")
+                face_dist = None
+            else:
+                # Already registered: verify against their specific stored model
+                ok, msg, face_dist = fu.verify_face(u["email"], face_b64)
+                if not ok:
+                    flash("Face verification failed: " + msg, "danger")
+                    return redirect(url_for("user.donation_pool"))
+        else:
+            # Password fallback (only when face recognition library not installed)
+            auth_pw = request.form.get("auth_password", "")
+            if not check_password_hash(u["password"], auth_pw):
+                flash("Incorrect password. Please try again.", "danger")
+                return redirect(url_for("user.donation_pool"))
+            face_dist = None
 
         # deduct & record
-        new_bal = u["balance"] - amount
+        new_bal = round(u["balance"] - amount, 2)
         users.update_one({"_id": u["_id"]}, {"$set": {"balance": new_bal}})
         donations.insert_one({
             "user_id":  u["user_id"],
@@ -538,7 +628,7 @@ def donation_pool():
             "user_id":           u["user_id"],
             "type":              "donation",
             "amount":            amount,
-            "face_distance":     _,
+            "face_distance":     face_dist,
             "resulting_balance": new_bal,
             "timestamp":         datetime.utcnow()
         })
@@ -562,5 +652,6 @@ def donation_pool():
         user=u,
         user_total=user_total,
         grand_total=grand_total,
-        history=history
-    )
+        history=history,
+        face_recognition_available=FACE_RECOGNITION_AVAILABLE
+    )

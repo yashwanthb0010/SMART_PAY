@@ -311,15 +311,18 @@
 
   <div class="main-content">
     <h1>Donation Pool</h1>
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div class="error-messages">
-          <ul>
-            {% for m in messages %}
-            <li>{{ m }}</li>
-            {% endfor %}
-          </ul>
-        </div>
+        {% for category, message in messages %}
+          <div style="padding:0.85rem 1rem;border-radius:8px;margin-bottom:12px;font-weight:500;display:flex;align-items:center;gap:0.5rem;
+            {% if category=='danger' %}background:#ffebee;color:#c62828;border-left:4px solid #f44336;
+            {% elif category=='warning' %}background:#fff8e1;color:#e65100;border-left:4px solid #ffa000;
+            {% elif category=='success' %}background:#e8f5e9;color:#2e7d32;border-left:4px solid #4caf50;
+            {% else %}background:#e3f2fd;color:#0d47a1;border-left:4px solid #1976d2;{% endif %}">
+            {% if category=='danger' %}❌{% elif category=='warning' %}⚠️{% elif category=='success' %}✅{% else %}ℹ️{% endif %}
+            {{ message }}
+          </div>
+        {% endfor %}
       {% endif %}
     {% endwith %}
     
@@ -340,9 +343,12 @@
       <h2>Make a Donation</h2>
       <form method="POST" id="donateForm">
         <div class="form-group">
-          <label for="donateAmount">Amount (₹)</label>
+          <label for="donateAmount">Amount (₹) — Your balance: <strong>₹{{ "%.2f"|format(user.balance) }}</strong></label>
           <input id="donateAmount" name="amount" type="number" step="0.01" min="1" placeholder="Enter amount" required/>
         </div>
+
+        {% if face_recognition_available %}
+        <!-- Face verification mode -->
         <div class="form-group face-capture">
           <label>Face Verification</label>
           <video id="donateVideo" autoplay></video>
@@ -350,6 +356,16 @@
           <input type="hidden" name="face_data" id="donateFaceData"/>
           <div class="capture-status" id="donateStatus">No face captured</div>
         </div>
+        {% else %}
+        <!-- Password fallback mode -->
+        <div class="form-group">
+          <label for="auth_password">🔒 Enter Your Password to Confirm Donation</label>
+          <input id="auth_password" name="auth_password" type="password"
+            style="width:100%;padding:1rem;border:1px solid #dadce0;border-radius:8px;font-size:1rem;"
+            placeholder="Your account password" required/>
+        </div>
+        {% endif %}
+
         <button type="submit" class="btn">
           <span class="icon">🤝</span>Donate Now
         </button>
@@ -390,19 +406,37 @@
     const btn   = document.getElementById('donateCapture');
     const out   = document.getElementById('donateStatus');
     const hid   = document.getElementById('donateFaceData');
+    const form  = document.getElementById('donateForm');
+    const faceRecognitionAvailable = {{ 'true' if face_recognition_available else 'false' }};
 
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => video.srcObject = stream)
-      .catch(err => out.textContent = 'Camera error');
+    if (faceRecognitionAvailable && video) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => video.srcObject = stream)
+        .catch(err => {
+          if (out) out.textContent = 'Camera error';
+        });
 
-    btn.addEventListener('click', () => {
-      const canvas = document.createElement('canvas');
-      canvas.width  = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      hid.value = canvas.toDataURL('image/jpeg');
-      out.textContent = '✓ Face Captured';
-    });
+      btn.addEventListener('click', () => {
+        const canvas = document.createElement('canvas');
+        const width = video.videoWidth || 320;
+        const height = video.videoHeight || 240;
+        canvas.width  = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        hid.value = canvas.toDataURL('image/jpeg');
+        if (out) out.textContent = '✓ Face Captured';
+      });
+    }
+
+    form.onsubmit = (e) => {
+      if (faceRecognitionAvailable) {
+        if (!hid.value || hid.value.trim() === "") {
+          e.preventDefault();
+          alert("Please capture your face before donating.");
+          return false;
+        }
+      }
+    };
   </script>
 </body>
 </html>

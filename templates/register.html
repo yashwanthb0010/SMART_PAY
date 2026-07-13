@@ -355,11 +355,37 @@
         opacity: 0;
       }
     }
+    .flash-msg {
+      padding: 0.85rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-weight: 500;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .flash-danger  { background: #ffebee; color: #c62828; border-left: 4px solid #f44336; }
+    .flash-warning { background: #fff8e1; color: #e65100; border-left: 4px solid #ffa000; }
+    .flash-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
+    .flash-info    { background: #e3f2fd; color: #0d47a1; border-left: 4px solid #1976d2; }
   </style>
 </head>
 <body>
   <div class="header">Register</div>
   <div class="form-container">
+    {# Always-visible flash messages at the very top #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-msg flash-{{ category }}">
+            {% if category == 'danger' %}❌{% elif category == 'warning' %}⚠️{% elif category == 'success' %}✅{% else %}ℹ️{% endif %}
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
     {% if qr_code_b64 %}
   <div style="background: var(--bg-white); padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
     <h3 style="color: var(--success-green); margin-bottom: .5rem;">
@@ -394,9 +420,6 @@
     
     <form method="POST" id="register-form">
       {% if not qr_code_b64 %}
-  <form method="POST" id="register-form">
-    
-  
 
       <input type="hidden" id="role" name="role" value="user">
       
@@ -415,8 +438,8 @@
       </div>
       
       <div class="form-group" id="acc-group">
-        <label for="acc_no">Account Number</label>
-        <input id="acc_no" name="acc_no" type="text"/>
+        <label for="acc_no">Account Number <span style="font-size:0.8rem;color:#666;font-weight:normal">(exactly 10 digits)</span></label>
+        <input id="acc_no" name="acc_no" type="text" pattern="[0-9]{10}" maxlength="10" placeholder="Enter 10-digit account number"/>
         <span class="focus-border"></span>
       </div>
       
@@ -460,20 +483,35 @@
         <input id="password" name="password" type="password" required autocomplete="new-password"/>
         <span class="focus-border"></span>
       </div>
-      
-      <div class="form-group face-capture">
-        <label>Capture Face</label>
-        <video id="video" autoplay></video>
-        <button id="capture-face" type="button">Capture Photo</button>
+
+      {% if face_recognition_available %}
+      <div class="form-group face-capture" id="face-capture-section">
+        <label>Capture Face <span style="font-weight:normal;font-size:0.85rem;color:#666">(required for users)</span></label>
+        <div id="face-error" style="display:none;color:#dc3545;margin-bottom:0.5rem;font-size:0.9rem;"></div>
+        <video id="video" autoplay playsinline></video>
+        <canvas id="face-canvas" style="display:none;"></canvas>
+        <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;">
+          <button id="capture-face" type="button">📷 Capture Photo</button>
+          <button id="retake-face" type="button" style="display:none;background:#6c757d;">🔄 Retake</button>
+        </div>
         <input type="hidden" name="face_data" id="face_data"/>
         <div class="face-captured" id="face-captured">✓ Face captured successfully!</div>
+        <div id="face-preview" style="display:none;margin-top:0.5rem;">
+          <img id="face-preview-img" style="max-width:160px;border-radius:8px;border:2px solid var(--success-green);" alt="Face preview"/>
+        </div>
       </div>
+      {% else %}
+      <div class="form-group" style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:1rem;">
+        <p style="margin:0;color:#856404;">⚠️ <strong>Face recognition unavailable.</strong><br>
+        Run <code>pip install opencv-contrib-python</code> to enable it.<br>
+        You can still register without face data.</p>
+        <input type="hidden" name="face_data" id="face_data" value=""/>
+      </div>
+      {% endif %}
       
       <button type="submit" id="submit-btn">Complete Registration</button>
+    {% endif %}
     </form>
-  </div>
-  </form>
-{% endif %}
   
   <div class="footer">
     Already have an account? <a href="/login">Login here</a>
@@ -537,47 +575,78 @@
       });
     });
     
-    // Face capture
-    const video = document.getElementById('video');
-    const capBtn = document.getElementById('capture-face');
+    // Face capture (improved with retake & preview)
+    const video     = document.getElementById('video');
+    const capBtn    = document.getElementById('capture-face');
+    const retakeBtn = document.getElementById('retake-face');
     const faceInput = document.getElementById('face_data');
-    const faceCaptured = document.getElementById('face-captured');
-    
-    navigator.mediaDevices.getUserMedia({video: true})
-      .then(stream => {
-        video.srcObject = stream;
-      })
-      .catch(err => {
-        console.error("Error accessing camera: ", err);
-        capBtn.textContent = "Camera access denied";
-        capBtn.disabled = true;
+    const faceCaptured   = document.getElementById('face-captured');
+    const facePreview    = document.getElementById('face-preview');
+    const facePreviewImg = document.getElementById('face-preview-img');
+    const faceError      = document.getElementById('face-error');
+
+    let cameraStream = null;
+
+    function startCamera() {
+      if (!video) return;
+      navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } })
+        .then(stream => {
+          cameraStream = stream;
+          video.srcObject = stream;
+          video.style.display = 'block';
+          if (faceError) faceError.style.display = 'none';
+        })
+        .catch(err => {
+          console.error("Camera error:", err);
+          if (faceError) {
+            faceError.textContent = '⚠️ Camera access denied or unavailable: ' + err.message;
+            faceError.style.display = 'block';
+          }
+          if (capBtn) { capBtn.textContent = 'Camera Unavailable'; capBtn.disabled = true; }
+        });
+    }
+
+    startCamera();
+
+    if (capBtn) {
+      capBtn.addEventListener('click', e => {
+        e.preventDefault();
+        if (!video || video.videoWidth === 0) {
+          alert('Camera not ready. Please allow camera access and try again.');
+          return;
+        }
+        const c = document.createElement('canvas');
+        c.width  = video.videoWidth;
+        c.height = video.videoHeight;
+        c.getContext('2d').drawImage(video, 0, 0);
+        const dataUrl = c.toDataURL('image/jpeg', 0.9);
+        faceInput.value = dataUrl;
+
+        // Show preview & success
+        if (facePreviewImg) { facePreviewImg.src = dataUrl; }
+        if (facePreview)    { facePreview.style.display = 'block'; }
+        if (faceCaptured)   { faceCaptured.style.display = 'block'; }
+        capBtn.style.display = 'none';
+        if (retakeBtn)       { retakeBtn.style.display = 'inline-block'; }
+
+        updateProgress();
       });
-    
-    capBtn.addEventListener('click', e => {
-      e.preventDefault();
-      
-      // Create ripple effect
-      const ripple = document.createElement('span');
-      ripple.className = 'ripple';
-      capBtn.appendChild(ripple);
-      
-      setTimeout(() => {
-        ripple.remove();
-      }, 600);
-      
-      const c = document.createElement('canvas');
-      c.width = video.videoWidth;
-      c.height = video.videoHeight;
-      c.getContext('2d').drawImage(video, 0, 0);
-      faceInput.value = c.toDataURL('image/jpeg');
-      
-      // Show success indicator
-      faceCaptured.style.display = 'block';
-      capBtn.style.backgroundColor = '#28a745';
-      capBtn.textContent = 'Photo Captured';
-      
-      updateProgress();
-    });
+    }
+
+    if (retakeBtn) {
+      retakeBtn.addEventListener('click', e => {
+        e.preventDefault();
+        faceInput.value = '';
+        if (facePreview)  { facePreview.style.display = 'none'; }
+        if (faceCaptured) { faceCaptured.style.display = 'none'; }
+        retakeBtn.style.display = 'none';
+        capBtn.style.display = 'inline-block';
+        capBtn.style.backgroundColor = '';
+        capBtn.textContent = '📷 Capture Photo';
+        // Restart camera if needed
+        if (!cameraStream || !cameraStream.active) startCamera();
+      });
+    }
     
     // Button ripple effect
     document.querySelectorAll('button').forEach(button => {
@@ -599,6 +668,8 @@
     });
     
     // Form validation
+    const faceRecognitionAvailable = {{ 'true' if face_recognition_available else 'false' }};
+
     document.getElementById('register-form').addEventListener('submit', function(e) {
       let valid = true;
       
@@ -615,9 +686,11 @@
       if (!valid) {
         e.preventDefault();
         alert('Please fill in all required fields.');
+        return;
       }
-      
-      if (!faceInput.value && roleInput.value === 'user') {
+
+      const fInput = document.getElementById('face_data');
+      if (faceRecognitionAvailable && fInput && !fInput.value && roleInput && roleInput.value === 'user') {
         e.preventDefault();
         alert('Please capture your face photo before registering.');
       }

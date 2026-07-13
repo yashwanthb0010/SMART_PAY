@@ -291,6 +291,21 @@
   <div class="main-content">
     <h1>Your Transactions</h1>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div style="padding:0.85rem 1rem;border-radius:8px;margin-bottom:12px;font-weight:500;display:flex;align-items:center;gap:0.5rem;
+            {% if category=='danger' %}background:#ffebee;color:#c62828;border-left:4px solid #f44336;
+            {% elif category=='warning' %}background:#fff8e1;color:#e65100;border-left:4px solid #ffa000;
+            {% elif category=='success' %}background:#e8f5e9;color:#2e7d32;border-left:4px solid #4caf50;
+            {% else %}background:#e3f2fd;color:#0d47a1;border-left:4px solid #1976d2;{% endif %}">
+            {% if category=='danger' %}❌{% elif category=='warning' %}⚠️{% elif category=='success' %}✅{% else %}ℹ️{% endif %}
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
     <!-- 1) Password authentication -->
     {% if not authenticated %}
       <div class="auth-form">
@@ -328,22 +343,44 @@
             {% for t in transactions %}
             <tr>
               <td>{{ t.timestamp.strftime("%Y-%m-%d %H:%M") }}</td>
-              <td class="type-{{ t.type }}">
-                {% if t.type=='send' %}
-                  <span class="icon-arrow">➖</span>Sent
-                {% else %}
-                  <span class="icon-arrow">➕</span>Received
-                {% endif %}
-              </td>
-              <td>₹{{ "%0.2f"|format(t.amount) }}</td>
               <td>
-                {% if t.type=='send' %}
-                  {{ t.recipient_upi }}
+                {% if t.type == 'send' %}
+                  <span class="type-send">➡️ Sent</span>
+                {% elif t.type == 'receive' %}
+                  <span class="type-receive">⬅️ Received</span>
+                {% elif t.type == 'deposit' %}
+                  <span class="type-receive">➕ Deposit</span>
+                {% elif t.type == 'withdraw' %}
+                  <span class="type-send">➖ Withdraw</span>
+                {% elif t.type == 'vault_deposit' %}
+                  <span style="color:#f59e0b;font-weight:500">🔒 Vault Lock</span>
+                {% elif t.type == 'vault_withdraw' %}
+                  <span style="color:#8b5cf6;font-weight:500">🔓 Vault Release</span>
+                {% elif t.type == 'donation' %}
+                  <span style="color:#ec4899;font-weight:500">🤝 Donation</span>
                 {% else %}
-                  {{ t.sender_upi }}
+                  <span>{{ t.type|capitalize }}</span>
                 {% endif %}
               </td>
-              <td>₹{{ "%0.2f"|format(t.resulting_balance) }}</td>
+              <td>&#8377;{{ "%0.2f"|format(t.amount) }}</td>
+              <td>
+                {% if t.type == 'send' %}
+                  To: {{ t.recipient_upi or '—' }}
+                {% elif t.type == 'receive' %}
+                  From: {{ t.sender_upi or '—' }}
+                {% elif t.type in ['deposit','withdraw'] %}
+                  Admin
+                {% elif t.type == 'vault_deposit' %}
+                  {{ t.purpose or 'Vault' }}
+                {% elif t.type == 'vault_withdraw' %}
+                  Vault — Penalty: &#8377;{{ "%0.2f"|format(t.penalty or 0) }}
+                {% elif t.type == 'donation' %}
+                  Donation Pool
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td>&#8377;{{ "%0.2f"|format(t.resulting_balance) }}</td>
             </tr>
             {% endfor %}
           </tbody>

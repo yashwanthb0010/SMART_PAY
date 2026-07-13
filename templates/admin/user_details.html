@@ -494,8 +494,9 @@
     <div class="form-container fade-in">
       <h2>Administrative Actions</h2>
       <form method="POST" id="adminForm" action="{{ url_for('admin.user_details', acc_no=user.acc_no) }}">
+        {% if face_recognition_available %}
         <div id="actionButtons" class="actions">
-          <button type="button" id="blockBtn" class="btn btn-block">Block Account</button>
+          <button type="button" id="blockBtn" class="btn btn-block">{% if user.is_blocked %}Unblock Account{% else %}Block Account{% endif %}</button>
           <button type="button" id="deleteBtn" class="btn btn-delete">Delete User</button>
         </div>
         
@@ -517,6 +518,20 @@
           <button type="button" id="verifyBtn" class="btn btn-verify pulse disabled">Verify &amp; Complete Action</button>
           <button type="button" id="cancelBtn" class="cancel-btn">Cancel</button>
         </div>
+        {% else %}
+        <!-- Password fallback mode (only when face recognition library unavailable) -->
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="auth_password">🔒 Admin Password</label>
+          <input type="password" id="auth_password" name="auth_password"
+            style="width:100%;padding:0.75rem 0.875rem;border:1px solid var(--input-border);border-radius:var(--border-radius);font-size:1rem;"
+            placeholder="Enter your admin password to confirm" required/>
+        </div>
+        <input type="hidden" name="action" id="selectedAction"/>
+        <div class="actions">
+          <button type="submit" onclick="document.getElementById('selectedAction').value='block';" class="btn btn-block">{% if user.is_blocked %}Unblock Account{% else %}Block Account{% endif %}</button>
+          <button type="submit" onclick="document.getElementById('selectedAction').value='delete'; return confirm('Are you sure you want to delete this user?');" class="btn btn-delete">Delete User</button>
+        </div>
+        {% endif %}
       </form>
     </div>
 
@@ -657,44 +672,52 @@
     }
     
     // Event Listeners
-    blockBtn.addEventListener('click', () => {
-      actionType = 'block';
-      selectedAction.value = 'block';
-      startCamera();
-    });
+    if (blockBtn && actionButtons) {
+      blockBtn.addEventListener('click', () => {
+        actionType = 'block';
+        selectedAction.value = 'block';
+        startCamera();
+      });
+    }
     
-    deleteBtn.addEventListener('click', () => {
-      actionType = 'delete';
-      selectedAction.value = 'delete';
-      startCamera();
-    });
+    if (deleteBtn && actionButtons) {
+      deleteBtn.addEventListener('click', () => {
+        actionType = 'delete';
+        selectedAction.value = 'delete';
+        startCamera();
+      });
+    }
     
-    verifyBtn.addEventListener('click', () => {
-      if (faceVerified) {
-        // Update status
-        captureStatus.textContent = 'Submitting request...';
-        
-        // Stop the camera
-        stopCamera();
-        
-        // Submit the form
-        adminForm.submit();
-      } else {
-        captureStatus.textContent = 'Face not verified yet. Please wait.';
-        captureStatus.className = 'face-capture-status error';
-        
-        // If verification is taking too long, offer a retry option
-        if (faceDetectionAttempts >= maxFaceDetectionAttempts) {
-          startFaceDetection(); // Restart the face detection process
-          captureStatus.textContent = 'Restarting face detection...';
-          captureStatus.className = 'face-capture-status';
+    if (verifyBtn) {
+      verifyBtn.addEventListener('click', () => {
+        if (faceVerified) {
+          // Update status
+          captureStatus.textContent = 'Submitting request...';
+          
+          // Stop the camera
+          stopCamera();
+          
+          // Submit the form
+          adminForm.submit();
+        } else {
+          captureStatus.textContent = 'Face not verified yet. Please wait.';
+          captureStatus.className = 'face-capture-status error';
+          
+          // If verification is taking too long, offer a retry option
+          if (faceDetectionAttempts >= maxFaceDetectionAttempts) {
+            startFaceDetection(); // Restart the face detection process
+            captureStatus.textContent = 'Restarting face detection...';
+            captureStatus.className = 'face-capture-status';
+          }
         }
-      }
-    });
+      });
+    }
     
-    cancelBtn.addEventListener('click', () => {
-      resetUI();
-    });
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        resetUI();
+      });
+    }
     
     // Handle page unload
     window.addEventListener('beforeunload', () => {

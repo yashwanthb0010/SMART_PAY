@@ -212,15 +212,29 @@
     <div class="card__bar"></div>
 
     <div class="card__body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div style="padding:0.75rem 1rem;border-radius:6px;margin-bottom:1rem;font-weight:500;
+              {% if category=='danger' %}background:#ffebee;color:#c62828;border-left:4px solid #f44336;
+              {% elif category=='success' %}background:#e8f5e9;color:#2e7d32;border-left:4px solid #4caf50;
+              {% else %}background:#e3f2fd;color:#0d47a1;border-left:4px solid #1976d2;{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
       <h1>Withdraw from {{ user.name }}</h1>
+      <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1rem;">Current Balance: <strong>₹{{ "%.2f"|format(user.balance) }}</strong></p>
 
       <form method="POST">
         <!-- Amount -->
         <div class="form-group">
           <label for="amount">Amount (₹)</label>
-          <input id="amount" name="amount" type="number" step="0.01" required />
+          <input id="amount" name="amount" type="number" step="0.01" min="0.01" required />
         </div>
 
+        {% if face_recognition_available %}
         <!-- Face capture -->
         <div class="form-group">
           <label>Admin Face Verification</label>
@@ -229,6 +243,15 @@
           <button type="button" id="capture" class="btn btn--secondary">Capture Face</button>
           <div id="captureStatus" class="status">Face captured ✓</div>
         </div>
+        {% else %}
+        <!-- Password fallback -->
+        <div class="form-group">
+          <label for="auth_password">🔒 Admin Password</label>
+          <input type="password" id="auth_password" name="auth_password"
+            style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem;"
+            placeholder="Enter your admin password" required />
+        </div>
+        {% endif %}
 
         <!-- Submit -->
         <button type="submit" class="btn btn--primary">Confirm Withdraw</button>
@@ -243,29 +266,50 @@
     const captureBtn = document.getElementById('capture');
     const faceInput = document.getElementById('face_data');
     const captureStatus = document.getElementById('captureStatus');
+    const form = document.querySelector('form');
+    const faceRecognitionAvailable = {{ 'true' if face_recognition_available else 'false' }};
 
-    // Start camera
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        video.srcObject = stream;
-      })
-      .catch(err => {
-        console.error(err);
-        captureBtn.disabled = true;
-        captureBtn.textContent = 'Camera Unavailable';
+    if (faceRecognitionAvailable && video) {
+      // Start camera
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          video.srcObject = stream;
+        })
+        .catch(err => {
+          console.error(err);
+          if (captureBtn) {
+            captureBtn.disabled = true;
+            captureBtn.textContent = 'Camera Unavailable';
+          }
+        });
+
+      // Capture face
+      captureBtn.addEventListener('click', () => {
+        const canvas = document.createElement('canvas');
+        const width = video.videoWidth || 320;
+        const height = video.videoHeight || 240;
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        faceInput.value = dataUrl;
+
+        captureStatus.classList.add('status--show');
+        captureStatus.textContent = "Face captured successfully!";
+        captureBtn.textContent = 'Retake Face';
       });
+    }
 
-    // Capture face
-    captureBtn.addEventListener('click', () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      faceInput.value = canvas.toDataURL('image/jpeg');
-
-      captureStatus.classList.add('status--show');
-      captureBtn.textContent = 'Retake Face';
-    });
+    form.onsubmit = (e) => {
+      if (faceRecognitionAvailable) {
+        if (!faceInput.value || faceInput.value.trim() === "") {
+          e.preventDefault();
+          alert("Please capture your face before submitting the withdrawal.");
+          return false;
+        }
+      }
+    };
   </script>
 </body>
 </html>
